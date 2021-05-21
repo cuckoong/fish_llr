@@ -21,62 +21,6 @@ def Mean_of_Active_Response(df):
     mean_active_response = data[:,3]/df.shape[1]
     return mean_active_response
 
-# Number of Rest Bout & Active Bout
-def num_rest_active_bout(df):
-    burst_data = df[:, :, 3]
-    tmp = burst_data > 0
-    num_rest_bout = []
-    num_active_bout = []
-    length_of_1st_rest_bout = []
-    length_of_1st_active_bout = []
-    average_rest_bout_list = []
-    average_active_bout_list = []
-    entropy_list = []
-
-    for j in range(len(df)):
-        # sample entropy
-        sample_entropy = sampen(burst_data[j,:])
-        entropy_list.append(sample_entropy)
-
-        grouped_L = [(k, sum(1 for i in g)) for k, g in groupby(tmp[j])]
-        grouped_L = np.array(grouped_L)
-
-        # rest: 0, active 1
-        # number of rest
-        num_rest_bout.append((grouped_L[grouped_L[:, 0] == 0, 1] >= 2).sum())
-        average_rest_bout = (grouped_L[(grouped_L[:, 0] == 0) & (grouped_L[:, 1] >= 1), 1]).mean()
-        average_rest_bout_list.append(average_rest_bout)
-
-        # number of active
-        num_active_bout.append((grouped_L[grouped_L[:, 0] == 1, 1] >= 2).sum())
-        if j == 20:
-            average_active_bout = (grouped_L[(grouped_L[:, 0] == 1) & (grouped_L[:, 1] >= 1), 1]).mean()
-        else:
-            average_active_bout = (grouped_L[(grouped_L[:, 0] == 1) & (grouped_L[:, 1] >= 1), 1]).mean()
-        average_active_bout_list.append(average_active_bout)
-
-        try:
-            first_rest_bout = np.where((grouped_L[:, 0] == 0) & (grouped_L[:, 1] >= 2))[0][0] # first rest_bout
-            rest_bout = np.sum(grouped_L[:first_rest_bout, 1])
-            # rest_bout = grouped_L[np.where((grouped_L[:, 0] == 0) & (grouped_L[:, 1] >= 2))][0, 1]
-        except IndexError:
-            print('no rest bout here, return length as whole length')
-            rest_bout = df.shape[1]
-        length_of_1st_rest_bout.append(rest_bout)
-
-        try:
-            first_active_bout = np.where((grouped_L[:, 0] == 1) & (grouped_L[:, 1] >= 2))[0][0]
-            active_bout = np.sum(grouped_L[:first_active_bout, 1])
-        except IndexError:
-            print('no active bout here, return length as as length')
-            active_bout = df.shape[1]
-        length_of_1st_active_bout.append(active_bout)
-
-    return num_rest_bout, num_active_bout, \
-           length_of_1st_rest_bout, length_of_1st_active_bout, \
-           average_rest_bout_list, average_active_bout_list, entropy_list
-
-
 # Sample Entropy
 def sampen(L, m=2, r=0.2):
     N = len(L)
@@ -97,3 +41,90 @@ def sampen(L, m=2, r=0.2):
 
     # Return SampEn
     return -np.log(A / B)
+
+
+def bout(grouped_L, df, mode=0):
+    num_bout = (grouped_L[grouped_L[:, 0] == mode, 1] >= 2).sum()
+    bout_list = grouped_L[(grouped_L[:, 0] == mode) & (grouped_L[:, 1] >= 2), 1]
+    try:
+        first_bout = np.where((grouped_L[:, 0] == mode) & (grouped_L[:, 1] >= 1))[0][0]  # first bout
+        first_bout_length = np.sum(grouped_L[:first_bout, 1])
+    except IndexError:
+        print('no rest or active bout here, return length as whole length')
+        first_bout_length = df.shape[1]
+    if len(bout_list) > 0:
+        average_bout = np.mean(bout_list)
+    else:
+        average_bout = 0
+    return num_bout, average_bout, first_bout_length
+
+
+# Number of Rest Bout & Active Bout
+def num_rest_active_bout(df):
+    burst_data = df[:, :, 3]
+    tmp = burst_data > 0
+    num_rest_bout_list = []
+    num_active_bout_list = []
+    length_of_1st_rest_bout = []
+    length_of_1st_active_bout = []
+    average_rest_bout_list = []
+    average_active_bout_list = []
+    entropy_list = []
+
+    for j in range(len(df)):
+        # sample entropy
+        sample_entropy = sampen(burst_data[j,:])
+        entropy_list.append(sample_entropy)
+
+        grouped_L = [(k, sum(1 for i in g)) for k, g in groupby(tmp[j])]
+        grouped_L = np.array(grouped_L)
+
+        # rest: 0, active 1
+        # number of rest
+        num_rest_bout, average_rest_bout, first_rest_bout_length = bout(grouped_L, df, mode=0)
+        num_active_bout, average_active_bout, first_active_bout_length = bout(grouped_L, df, mode=1)
+
+        # number of active
+        num_rest_bout_list.append(num_rest_bout)
+        num_active_bout_list.append(num_active_bout)
+
+        length_of_1st_rest_bout.append(first_rest_bout_length)
+        length_of_1st_active_bout.append(first_active_bout_length)
+
+        average_rest_bout_list.append(average_rest_bout)
+        average_active_bout_list.append(average_active_bout)
+
+
+    return num_rest_bout_list, num_active_bout_list, \
+           length_of_1st_rest_bout, length_of_1st_active_bout, \
+           average_rest_bout_list, average_active_bout_list, entropy_list
+
+
+def get_features(data, time=30, period=30):
+    sr = 1
+    bin_well = int(60 / sr)
+
+    if period == 'baseline':
+        data_base = data[:, :30*bin_well,:]
+        features = calculate_features(data_base)
+    else:
+        data_ON = data[:, 30*bin_well :(30 + period) * bin_well, :]
+        data_OFF = data[:, (30+time) * bin_well: (30 + time + period) * bin_well:, :]
+
+        ON_features = calculate_features(data_ON)
+        OFF_features = calculate_features(data_OFF)
+
+        features = np.concatenate([ON_features, OFF_features], axis=1)
+
+    return features
+
+def calculate_features(df):
+    max_amplitude = Maximal_Amplitude(df)
+    # mean_total_response = Mean_of_Total_Response(df)
+    mean_active_response = Mean_of_Active_Response(df)
+    rout_list = num_rest_active_bout(df)
+    features_list = [np.array(i) for i in rout_list]
+    features_list.append(max_amplitude)
+    features_list.append(mean_active_response)
+    features = np.stack(features_list, axis=1)
+    return features
