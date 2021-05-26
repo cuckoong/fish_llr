@@ -3,13 +3,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
-    method = 'KNN'
+    method = 'SVM4w'
     df = pd.read_csv('/Users/panpan/PycharmProjects/FIsh/Results/{}.csv'.format(method))
     labels = ['0W', '1W', '2.5W']
     x = np.arange(len(labels))
     # the label locations
     width = 0.35  # the width of the bars
-    days = [5,6,7,8]
+    days = [5, 6, 7, 8]
     fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(7, 7))#, sharey=True, sharex=True)
     axs = axs.flatten()
 
@@ -37,7 +37,7 @@ if __name__ == '__main__':
         axs[i].set_ylim((0, 1))
         axs[i].legend(loc='upper left')
         axs[i].annotate(xy = (1,0.8), text = 'Data from {}dpf'.format(day))
-        axs[i].axhline(y=0.5, ls='--', c='k')
+        # axs[i].axhline(y=0.5, ls='--', c='k')
 
 
         s = 12
@@ -60,7 +60,7 @@ if __name__ == '__main__':
         axs[i].scatter(x + 1 * width / 3, (min_30_pvalue < p_t) * (min_30 + 0.06), marker='*', c='k', s=s)
 
     if method == 'NB':
-        fig.suptitle('Classification Using {}'.format('Naive Bayes'), fontsize=16)
+        fig.suptitle('Classification Using {}'.format('Naive\nBayes'), fontsize=16)
     else:
         fig.suptitle('Classification Using {}'.format(method), fontsize=16)
 
