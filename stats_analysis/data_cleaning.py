@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
                 # get duration values
                 features = df[['burdur', 'aname', 'end']].copy(deep=True)
-                features['aname'] = str(day)+ '-'+features['aname']
+                features['aname'] = str(day)+ '-' + str(plate) + '-'+features['aname']
                 features['end'] = round(features['end']).astype('int')
 
                 label_file = '{}w-60h-{}dpf-0{}-label.npy'.format(radiation,day, plate)
@@ -38,6 +38,7 @@ if __name__ == '__main__':
                 features.drop(features[features.label < 0].index, inplace=True)
                 features['radiation'] = radiation
                 features['day'] = day
+                features.loc[features['label'] == 0, 'radiation'] = -1
 
                 # result dir
                 res_file = 'burdur_r{}_d{}_p{}.csv'.format(radiation, day, plate)
