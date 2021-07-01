@@ -1,6 +1,6 @@
 # 2 way anova to analyse the radiation vs control
-set.seed(345)
-# load data
+set.seed(35)
+# load data from files
 library(readr)
 library(dplyr)
 
