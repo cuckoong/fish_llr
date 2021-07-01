@@ -10,7 +10,7 @@ if __name__ == '__main__':
     label_dir = 'C:\\Users\\xiaoliwu\\PycharmProjects\\Fish\\features_sensitivity20_burst0\\'
     res_dir = 'C:\\Users\\xiaoliwu\\PycharmProjects\\Fish\\stat_analysis\\'
     days = [5, 6, 7, 8]
-    radiations = [0, 1, 2.5, 5]
+    radiations = [5]
     plates = [1, 2]
 
     df_list = []
@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
                 # get duration values
                 features = df[['burdur', 'aname', 'end']].copy(deep=True)
-                features['aname'] = str(day)+ '-' + str(plate) + '-'+features['aname']
+                features['animal'] = str(plate) + '-'+features['aname']
                 features['end'] = round(features['end']).astype('int')
 
                 label_file = '{}w-60h-{}dpf-0{}-label.npy'.format(radiation,day, plate)
@@ -38,7 +38,7 @@ if __name__ == '__main__':
                 features.drop(features[features.label < 0].index, inplace=True)
                 features['radiation'] = radiation
                 features['day'] = day
-                features.loc[features['label'] == 0, 'radiation'] = -1
+                features.loc[features['label'] == 0, 'radiation'] = 0
 
                 # result dir
                 res_file = 'burdur_r{}_d{}_p{}.csv'.format(radiation, day, plate)
@@ -49,6 +49,6 @@ if __name__ == '__main__':
                 df_list.append(features)
 
     frame = pd.concat(df_list, axis=0, ignore_index=True)
-    frame.to_csv(r'C:\Users\xiaoliwu\PycharmProjects\Fish\stat_analysis\burdur_all.csv')
+    frame.to_csv(r'C:\Users\xiaoliwu\PycharmProjects\Fish\stat_analysis\burdur_5w_all_burst0.csv')
 
 
