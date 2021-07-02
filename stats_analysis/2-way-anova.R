@@ -1,11 +1,11 @@
 # 2 way anova to analyse the radiation vs control
-set.seed(35)
+set.seed(345)
 # load data from files
 library(readr)
 library(dplyr)
 
 # load data ------------------------------------------------------------------------------------------------------------
-myData <-  read_csv('/linear_mixed_model_burst0_5W_batch1/burdur_5w_all_burst0.csv')
+myData <-  read_csv('/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/stat_data/burdur_5w_batch2_burst4.csv')
 myData <-  myData %>%
   select(burdur, animal, end, label, radiation, day) %>%
   filter((end > 1770 & end <= 1830) | (end > 3570 & end <= 3630) |
@@ -33,33 +33,34 @@ library(nlme)
 # burdur, aname, label, day, stim_stage, stim_group
 baseline <-  lme(burdur~1, random=~1|animal/stim_stage/day, data = myData, method='ML')
 # save model
-save(baseline, file= 'linear_mixed_model_burst0_5W_batch1/lme_burst0_baseline.rda')
+dir <-  'Analysis_Results/Statistical_Results/linear_mixed_model_burst4_5W_batch2'
+
+save(baseline, file= paste(dir,'lme_burst4_baseline.rda', sep="/"))
+
 # load('lme_burst4_baseline.rda')
 radiationM <- update(baseline, .~. + label)
-save(radiationM, file= 'linear_mixed_model_burst0_5W_batch1/lme_burst0_radiationM.rda')
+save(radiationM, file= paste(dir,'lme_burst4_radiationM.rda', sep="/"))
 
 dayM <- update(radiationM, .~. + day)
-save(dayM, file= 'linear_mixed_model_burst0_5W_batch1/lme_burst0_dayM.rda')
+save(dayM, file= paste(dir,'lme_burst4_dayM.rda', sep="/"))
 
 stim_stageM <- update(dayM, .~. + stim_stage)
-save(stim_stageM, file= 'linear_mixed_model_burst0_5W_batch1/lme_burst0_stim_stageM.rda')
+save(stim_stageM, file= paste(dir,'lme_burst0_stim_stageM.rda', sep="/"))
 
 
 # stim_groupM <- update(stim_stageM, .~. + stim_group)
 radiation_day <- update(stim_stageM, .~. + label:day)
-save(radiation_day, file= 'linear_mixed_model_burst0_5W_batch1/lme_burst0_radiation_day.rda')
+save(radiation_day, file= paste(dir, 'lme_burst0_radiation_day.rda', sep="/"))
 
 radiation_stim <- update(radiation_day, .~. + label:stim_stage)
-save(radiation_stim, file= 'linear_mixed_model_burst0_5W_batch1/lme_burst0_radiation_stim.rda')
+save(radiation_stim, file= paste(dir, 'lme_burst0_radiation_stim.rda', sep="/"))
 
 day_stim <- update(radiation_stim, .~. + day:stim_stage)
-save(day_stim, file= 'linear_mixed_model_burst0_5W_batch1/lme_burst0_day_stim.rda')
+save(day_stim, file= paste(dir, 'lme_burst0_day_stim.rda', sep="/"))
 
 all <- update(day_stim, .~. + day:stim_stage:label)
 
-save(all, file= 'linear_mixed_model_burst0_5W_batch1/lme_burst0_all.rda')
-
-save(all, file= 'linear_mixed_model_burst4_5W_batch1/lme_burst4_all.rda')
+save(all, file= paste(dir, 'lme_burst0_all.rda', sep="/"))
 
 # visualization
 anova(baseline, radiationM, dayM, stim_stageM, radiation_day, radiation_stim, day_stim, all)

@@ -6,9 +6,9 @@ Generate the burst duration from raw data for statistical analysis on light-indu
 '''
 
 if __name__ == '__main__':
-    feature_dir = 'C:\\Users\\xiaoliwu\\PycharmProjects\\Fish\\data\\sensitivity10_burst0\\'
-    label_dir = 'C:\\Users\\xiaoliwu\\PycharmProjects\\Fish\\features_sensitivity20_burst0\\'
-    res_dir = 'C:\\Users\\xiaoliwu\\PycharmProjects\\Fish\\stat_analysis\\'
+    feature_dir = '/home/tmp2/PycharmProjects/fish_llr/Data/burst4/5w_2/'
+    label_dir = '/home/tmp2/PycharmProjects/fish_llr/Data/burst4/5w_2/'
+    res_dir = '/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/stat_data/'
     days = [5, 6, 7, 8]
     radiations = [5]
     plates = [1, 2]
@@ -26,13 +26,12 @@ if __name__ == '__main__':
                 features['animal'] = str(plate) + '-'+features['aname']
                 features['end'] = round(features['end']).astype('int')
 
-                label_file = '{}w-60h-{}dpf-0{}-label.npy'.format(radiation,day, plate)
+                label_file = '{}W-60h-{}dpf-0{}-label.npy'.format(radiation, day, plate)
                 # 1: radiation; 0: control
                 label = np.load(label_dir+label_file)
-                label = 1-label
 
                 # extend the label array with no-fish well
-                label = np.append(label, np.repeat(-1, 96-len(label)))
+                # label = np.append(label, np.repeat(-1, 96-len(label)))
                 labels = np.tile(label, int(len(features)/len(label)))
                 features['label'] = labels
                 features.drop(features[features.label < 0].index, inplace=True)
@@ -49,6 +48,6 @@ if __name__ == '__main__':
                 df_list.append(features)
 
     frame = pd.concat(df_list, axis=0, ignore_index=True)
-    frame.to_csv(r'C:\Users\xiaoliwu\PycharmProjects\Fish\stat_analysis\burdur_5w_all_burst0.csv')
+    frame.to_csv('/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/stat_data/burdur_5w_batch2_burst4.csv')
 
 
