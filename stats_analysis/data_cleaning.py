@@ -1,4 +1,4 @@
-### This file was used to clean 5W batch One only. Not for batch two
+### This file was used to clean 5W batch two only
 
 import numpy as np
 import pandas as pd
