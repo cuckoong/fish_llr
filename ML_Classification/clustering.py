@@ -4,7 +4,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_validate, cross_val_score, GridSearchCV
-from sklearn.model_selection import RepeatedStratifiedKFold,permutation_test_score
+from sklearn.model_selection import RepeatedStratifiedKFold, permutation_test_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import f1_score
@@ -22,7 +22,7 @@ def clf(data, label, case='SVM'):
     elif case == 'KNN':
         steps = [('scaler', StandardScaler()), ('knn', KNeighborsClassifier())]
         pip = Pipeline(steps)
-        param_grid = [{'knn__n_neighbors':np.arange(1,10)}]
+        param_grid = [{'knn__n_neighbors': np.arange(1, 10)}]
 
     elif case == 'NB':
         steps = [('scaler', StandardScaler()), ('NB', GaussianNB())]
@@ -48,8 +48,8 @@ def clf(data, label, case='SVM'):
 
     # permutation test
     cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=10, random_state=1)
-    acc, _, pvalue = permutation_test_score(model, data, label, cv=cv, n_permutations=100,n_jobs=-1,
-                                           random_state=1, verbose=0, scoring=('balanced_accuracy'))
+    acc, _, pvalue = permutation_test_score(model, data, label, cv=cv, n_permutations=100, n_jobs=-1,
+                                            random_state=1, verbose=0, scoring=('balanced_accuracy'))
     return acc, pvalue
 
 
@@ -57,7 +57,8 @@ if __name__ == "__main__":
     case = 'NB'
     powers = [5]
     times = [1, 2, 30]
-    days = [5, 6, 7]
+    days = [5, 6, 7, 8]
+    batches = [2]
 
     power_list = []
     time_list = []
@@ -65,20 +66,25 @@ if __name__ == "__main__":
     acc_list = []
     pvalue_list = []
 
-
-    dir = '/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/ML_results/burst_4/batch1/'
-
     for power in powers:
         for time in times:
             for day in days:
-                data_01 = np.load(dir+str(power)+'W-60h-'+str(day)+'dpf-01-'+str(time)+'min-feature.npy')
-                data_02 = np.load(dir+str(power)+'W-60h-'+str(day)+'dpf-02-'+str(time)+'min-feature.npy')
+                data_list = []
+                label_list = []
+                for batch in batches:
+                    dir = '/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/ML_results/burst_4/batch{}/'.format(
+                        batch)
+                    for plate in [1, 2]:
+                        data_plate = np.load(
+                            dir + str(power) + 'W-60h-' + str(day) + 'dpf-0' + str(plate) + '-' + str(time) +
+                            'min-feature.npy')
+                        label_plate = np.load(
+                            dir + str(power) + 'W-60h-' + str(day) + 'dpf-0' + str(plate) + '-' + 'label.npy')
+                    data_list.append(data_plate)
+                    label_list.append(label_plate)
 
-                label_01 = np.load(dir+str(power)+'W-60h-'+str(day)+'dpf-01-label.npy')
-                label_02 = np.load(dir+str(power)+'W-60h-'+str(day)+'dpf-02-label.npy')
-
-                data = np.concatenate((data_01, data_02), axis=0)
-                label = np.concatenate((label_01, label_02), axis=0)
+                data = np.concatenate(data_list, axis=0)
+                label = np.concatenate(label_list, axis=0)
 
                 # if time == 'baseline':
                 #     data = data[:, [0, 1, 4, 5, 6, 7, 8]]
@@ -91,6 +97,6 @@ if __name__ == "__main__":
                 acc_list.append(acc)
                 pvalue_list.append(pvalue)
 
-    df = pd.DataFrame(data = dict(power = power_list, time = time_list, day = day_list, acc = acc_list,
-                                  pvalue = pvalue_list))
-    df.to_csv(case+'_5w_batch_1.csv')
+    df = pd.DataFrame(data=dict(power=power_list, time=time_list, day=day_list, acc=acc_list,
+                                pvalue=pvalue_list))
+    df.to_csv(case + '_5w_2.csv')
