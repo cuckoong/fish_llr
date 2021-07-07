@@ -1,25 +1,35 @@
 import numpy as np
-import pandas as pd
 from itertools import groupby
 
+
 def Maximal_Amplitude(df):
-    data = df[:, :, 3]
+    """
+    :param df:
+    :return: max burst duration
+    """
+    bur_label = 5
+    data = df[:, :, bur_label]
     max_burdur = np.max(data, axis=1)
     return max_burdur
 
 
 # Mean of Total Response
 def Mean_of_Total_Response(df):
+    mid_label = 3
+    bur_label = 5
     # be carefule when busrt is set to 0.
     data = np.sum(df, axis=1)
-    mean_total_response = data[:,3]/df.shape[1]
+    mean_total_response = (data[:, mid_label] + data[:, bur_label]) / df.shape[1]
     return mean_total_response
 
-# Mean of the Active Response
+
+# Mean of the Active Response (burst response)
 def Mean_of_Active_Response(df):
+    bur_label = 5
     data = np.sum(df, axis=1)
-    mean_active_response = data[:,3]/df.shape[1]
+    mean_active_response = data[:, bur_label] / df.shape[1]
     return mean_active_response
+
 
 # Sample Entropy
 def sampen(L, m=2, r=0.2):
@@ -50,7 +60,10 @@ def bout(grouped_L, df, mode=0):
         first_bout = np.where((grouped_L[:, 0] == mode) & (grouped_L[:, 1] >= 1))[0][0]  # first bout
         first_bout_length = np.sum(grouped_L[:first_bout, 1])
     except IndexError:
-        print('no rest or active bout here, return length as whole length')
+        if mode == 0:
+            print('no rest bout here, return length as whole length')
+        elif mode == 1:
+            print('no active bout here, return length as whole length')
         first_bout_length = df.shape[1]
     if len(bout_list) > 0:
         average_bout = np.mean(bout_list)
@@ -61,7 +74,8 @@ def bout(grouped_L, df, mode=0):
 
 # Number of Rest Bout & Active Bout
 def num_rest_active_bout(df):
-    burst_data = df[:, :, 3]
+    bur_label = 5
+    burst_data = df[:, :, bur_label]
     tmp = burst_data > 0
     num_rest_bout_list = []
     num_active_bout_list = []
@@ -73,7 +87,7 @@ def num_rest_active_bout(df):
 
     for j in range(len(df)):
         # sample entropy
-        sample_entropy = sampen(burst_data[j,:])
+        sample_entropy = sampen(burst_data[j, :])
         entropy_list.append(sample_entropy)
 
         grouped_L = [(k, sum(1 for i in g)) for k, g in groupby(tmp[j])]
@@ -94,37 +108,49 @@ def num_rest_active_bout(df):
         average_rest_bout_list.append(average_rest_bout)
         average_active_bout_list.append(average_active_bout)
 
-
     return num_rest_bout_list, num_active_bout_list, \
            length_of_1st_rest_bout, length_of_1st_active_bout, \
            average_rest_bout_list, average_active_bout_list, entropy_list
 
 
 def get_features(data, time=30, period=30):
+    """
+
+    :param data: quantization data
+    :param time: ON/OFF time duration
+    :param period: Time periods we use to calculate the features
+    :return: features for classification
+    """
     sr = 1
     bin_well = int(60 / sr)
 
     if period == 'baseline':
-        data_base = data[:, :30*bin_well,:]
+        data_base = data[:, :30 * bin_well, :]
         features = calculate_features(data_base)
     else:
-        data_ON = data[:, 30*bin_well :(30 + period) * bin_well, :]
-        data_OFF = data[:, (30+time) * bin_well: (30 + time + period) * bin_well:, :]
+        # Two rounds of ON/OFF
+        # Baseline-ON-OFF-ON-OFF
+        features_period_list = []
+        for i in range(5):
+            win_start = i * 30 * bin_well
+            win_end = i * 30 * bin_well + period * bin_well
+            data_period = data[:, win_start: win_end, :]
+            features_period = calculate_features(data_period)
+            features_period_list.append(features_period)
 
-        ON_features = calculate_features(data_ON)
-        OFF_features = calculate_features(data_OFF)
-
-        features = np.concatenate([ON_features, OFF_features], axis=1)
+        features = np.concatenate(features_period_list, axis=1)
 
     return features
 
+
 def calculate_features(df):
     max_amplitude = Maximal_Amplitude(df)
-    # mean_total_response = Mean_of_Total_Response(df)
+    mean_total_response = Mean_of_Total_Response(df)
     mean_active_response = Mean_of_Active_Response(df)
     rout_list = num_rest_active_bout(df)
     features_list = [np.array(i) for i in rout_list]
     features_list.append(max_amplitude)
+    features_list.append(mean_total_response)
     features_list.append(mean_active_response)
     features = np.stack(features_list, axis=1)
     return features

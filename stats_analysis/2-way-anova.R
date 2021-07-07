@@ -45,22 +45,21 @@ dayM <- update(radiationM, .~. + day)
 save(dayM, file= paste(dir,'lme_burst4_dayM.rda', sep="/"))
 
 stim_stageM <- update(dayM, .~. + stim_stage)
-save(stim_stageM, file= paste(dir,'lme_burst0_stim_stageM.rda', sep="/"))
-
+save(stim_stageM, file= paste(dir,'lme_burst4_stim_stageM.rda', sep="/"))
 
 # stim_groupM <- update(stim_stageM, .~. + stim_group)
 radiation_day <- update(stim_stageM, .~. + label:day)
-save(radiation_day, file= paste(dir, 'lme_burst0_radiation_day.rda', sep="/"))
+save(radiation_day, file= paste(dir, 'lme_burst4_radiation_day.rda', sep="/"))
 
 radiation_stim <- update(radiation_day, .~. + label:stim_stage)
-save(radiation_stim, file= paste(dir, 'lme_burst0_radiation_stim.rda', sep="/"))
+save(radiation_stim, file= paste(dir, 'lme_burst4_radiation_stim.rda', sep="/"))
 
 day_stim <- update(radiation_stim, .~. + day:stim_stage)
-save(day_stim, file= paste(dir, 'lme_burst0_day_stim.rda', sep="/"))
+save(day_stim, file= paste(dir, 'lme_burst4_day_stim.rda', sep="/"))
 
 all <- update(day_stim, .~. + day:stim_stage:label)
 
-save(all, file= paste(dir, 'lme_burst0_all.rda', sep="/"))
+save(all, file= paste(dir, 'lme_burst4_all.rda', sep="/"))
 
 # visualization
-anova(baseline, radiationM, dayM, stim_stageM, radiation_day, radiation_stim, day_stim, all)
+anova(baseline, radiationM, dayM, stim_stageM, radiation_day)#, radiation_stim, day_stim, all)
