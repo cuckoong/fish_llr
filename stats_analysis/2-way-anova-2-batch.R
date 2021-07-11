@@ -68,7 +68,7 @@ dir <-  paste('/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/Statistical_
 
 # burdur, aname, label, day, stim_stage, stim_group
 baseline <-  lme(inte_burdur~1, random=~1|animal_batch/stim_stage, data = myData, method='ML',
-                 control=(msMaxIter=100))
+                  control=lmeControl(opt = "optim"))
 save(baseline, file= paste(dir,'lme_burst4_baseline_integrate.rda', sep="/"))
 
 # load('lme_burst4_baseline.rda')
