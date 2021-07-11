@@ -1,4 +1,4 @@
-### This file was used to clean 5W batch two only
+### This file was used to clean 5W inte_end two only
 
 import numpy as np
 import pandas as pd
@@ -8,11 +8,11 @@ Generate the burst duration from raw data for statistical analysis on light-indu
 '''
 
 if __name__ == '__main__':
-    feature_dir = '/home/tmp2/PycharmProjects/fish_llr/Data/burst4/5w_1/'
-    label_dir = '/home/tmp2/PycharmProjects/fish_llr/Data/burst4/5w_1/'
+    feature_dir = '/home/tmp2/PycharmProjects/fish_llr/Data/burst4/0w_1/'
+    label_dir = '/home/tmp2/PycharmProjects/fish_llr/Data/burst4/0w_1/'
     res_dir = '/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/stat_data/'
     days = [5, 6, 7, 8]
-    radiations = [5]
+    radiations = [0]
     plates = [1, 2]
 
     df_list = []
@@ -50,6 +50,6 @@ if __name__ == '__main__':
                 df_list.append(features)
 
     frame = pd.concat(df_list, axis=0, ignore_index=True)
-    frame.to_csv('/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/stat_data/burdur_5w_batch1_burst4.csv')
+    frame.to_csv('/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/stat_data/burdur_0w_batch1_burst4.csv')
 
 
