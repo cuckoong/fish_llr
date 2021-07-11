@@ -29,11 +29,11 @@ def clf(data, label, case='SVM'):
         pip = Pipeline(steps)
         # permutation test
         cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=10, random_state=1)
-        acc, _, pvalue = permutation_test_score(pip, data, label, cv=cv, n_permutations=100, n_jobs=-1,
+        acc, _, pvalue = permutation_test_score(pip, data, label, cv=cv, n_permutations=500, n_jobs=-1,
                                                 random_state=1, verbose=0, scoring=('balanced_accuracy'))
         return acc, pvalue
 
-    gd_sr = GridSearchCV(pip, param_grid=param_grid, scoring='accuracy', cv=5, n_jobs=-1)
+    gd_sr = GridSearchCV(pip, param_grid=param_grid, scoring='balanced_accuracy', cv=5, n_jobs=-1)
     gd_sr.fit(data, label)
     params = gd_sr.best_params_
 
@@ -48,17 +48,17 @@ def clf(data, label, case='SVM'):
 
     # permutation test
     cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=10, random_state=1)
-    acc, _, pvalue = permutation_test_score(model, data, label, cv=cv, n_permutations=100, n_jobs=-1,
+    acc, _, pvalue = permutation_test_score(model, data, label, cv=cv, n_permutations=500, n_jobs=-1,
                                             random_state=1, verbose=0, scoring=('balanced_accuracy'))
     return acc, pvalue
 
 
 if __name__ == "__main__":
-    case = 'NB'
-    powers = [5]
-    times = [1, 2, 30]
+    case = 'KNN'
+    power = 5
+    times = ['baseline', 1, 2, 30]
     days = [5, 6, 7, 8]
-    batches = [2]
+    batches = [1, 2]
 
     power_list = []
     time_list = []
@@ -66,37 +66,32 @@ if __name__ == "__main__":
     acc_list = []
     pvalue_list = []
 
-    for power in powers:
-        for time in times:
-            for day in days:
-                data_list = []
-                label_list = []
-                for batch in batches:
-                    dir = '/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/ML_results/burst_4/batch{}/'.format(
-                        batch)
-                    for plate in [1, 2]:
-                        data_plate = np.load(
-                            dir + str(power) + 'W-60h-' + str(day) + 'dpf-0' + str(plate) + '-' + str(time) +
-                            'min-feature.npy')
-                        label_plate = np.load(
-                            dir + str(power) + 'W-60h-' + str(day) + 'dpf-0' + str(plate) + '-' + 'label.npy')
+    for time in times:
+        for day in days:
+            data_list = []
+            label_list = []
+            for batch in batches:
+                dir = '/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/ML_results/burst_4/batch{}/'.format(
+                    batch)
+                for plate in [1, 2]:
+                    data_plate = np.load(
+                        dir + str(power) + 'W-60h-' + str(day) + 'dpf-0' + str(plate) + '-' + str(time) +
+                        'min-feature.npy')
+                    label_plate = np.load(
+                        dir + str(power) + 'W-60h-' + str(day) + 'dpf-0' + str(plate) + '-' + 'label.npy')
                     data_list.append(data_plate)
                     label_list.append(label_plate)
 
-                data = np.concatenate(data_list, axis=0)
-                label = np.concatenate(label_list, axis=0)
+            data = np.concatenate(data_list, axis=0)
+            label = np.concatenate(label_list, axis=0)
 
-                # if time == 'baseline':
-                #     data = data[:, [0, 1, 4, 5, 6, 7, 8]]
-                # else:
-                #     data = data[:,[0,1,4,5,6,7,8,9,10,13,14,15,16,17]]
-                acc, pvalue = clf(data, label, case=case)
-                power_list.append(power)
-                time_list.append(time)
-                day_list.append(day)
-                acc_list.append(acc)
-                pvalue_list.append(pvalue)
+            acc, pvalue = clf(data, label, case=case)
+            power_list.append(power)
+            time_list.append(time)
+            day_list.append(day)
+            acc_list.append(acc)
+            pvalue_list.append(pvalue)
 
-    df = pd.DataFrame(data=dict(power=power_list, time=time_list, day=day_list, acc=acc_list,
-                                pvalue=pvalue_list))
-    df.to_csv(case + '_5w_2.csv')
+    df = pd.DataFrame(data=dict(power=power_list, time=time_list, day=day_list, acc=acc_list, pvalue=pvalue_list))
+    df.to_csv('/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/ML_results/ML_acc/' + case +
+              '_{}w_all.csv'.format(power))

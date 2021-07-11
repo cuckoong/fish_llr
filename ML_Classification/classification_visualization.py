@@ -3,31 +3,47 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
-    method = 'SVM4w'
-    df = pd.read_csv('/Users/panpan/PycharmProjects/FIsh/Results/{}.csv'.format(method))
-    labels = ['0W', '1W', '2.5W']
+    power = 0
+    batch = 'all'
+    methods = ['SVM', 'NB', 'KNN']
+    df_svm = pd.read_csv('/home/tmp2/PycharmProjects/fish_llr/'
+                         'Analysis_Results/ML_results/ML_acc/SVM_{}w_{}.csv'.format(power, batch))
+
+    df_nb = pd.read_csv('/home/tmp2/PycharmProjects/fish_llr/'
+                        'Analysis_Results/ML_results/ML_acc/NB_{}w_{}.csv'.format(power, batch))
+
+    df_knn = pd.read_csv('/home/tmp2/PycharmProjects/fish_llr/'
+                         'Analysis_Results/ML_results/ML_acc/KNN_{}w_{}.csv'.format(power, batch))
+    df_svm['method'] = 'SVM'
+    df_nb['method'] = 'NB'
+    df_knn['method'] = 'KNN'
+
+    df_all = pd.concat([df_svm, df_nb, df_knn])
+    df = df_all[df_all['power']==power].sort_values(['power', 'method', 'day', 'time'])
+
+    labels = ['1min', '2min', '30min', 'Baseline']
     x = np.arange(len(labels))
     # the label locations
     width = 0.35  # the width of the bars
     days = [5, 6, 7, 8]
-    fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(7, 7))#, sharey=True, sharex=True)
+    fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(7, 7))  # , sharey=True, sharex=True)
     axs = axs.flatten()
 
     for i, day in enumerate(days):
-        baseline = df[(df['time']=='baseline') & (df['day']==day)]['acc']
-        min_1 = df[(df['time']=='1') & (df['day']==day)]['acc']
-        min_2 = df[(df['time']=='2') & (df['day']==day)]['acc']
-        min_30 = df[(df['time']=='30') & (df['day']==day)]['acc']
+        svm_acc = df[(df['method'] == 'SVM') & (df['day'] == day)]['acc']
+        nb_acc = df[(df['method'] == 'NB') & (df['day'] == day)]['acc']
+        knn_acc = df[(df['method'] == 'KNN') & (df['day'] == day)]['acc']
+        # min_30 = df[(df['time']=='30') & (df['day']==day)]['acc']
 
-        baseline_pvalue = df[(df['time'] == 'baseline') & (df['day'] == day)]['pvalue']
-        min_1_pvalue = df[(df['time'] == '1') & (df['day'] == day)]['pvalue']
-        min_2_pvalue = df[(df['time'] == '2') & (df['day'] == day)]['pvalue']
-        min_30_pvalue = df[(df['time'] == '30') & (df['day'] == day)]['pvalue']
+        svm_pvalue = df[(df['method'] == 'SVM') & (df['day'] == day)]['pvalue']
+        nb_pvalue = df[(df['method'] == 'NB') & (df['day'] == day)]['pvalue']
+        knn_pvalue = df[(df['method'] == 'KNN') & (df['day'] == day)]['pvalue']
+        # min_30_pvalue = df[(df['time'] == '30') & (df['day'] == day)]['pvalue']
 
-        rects1 = axs[i].bar(x - 2 * width / 3, baseline, width/3, label='baseline')
-        rects2 = axs[i].bar(x - 1 * width / 3, min_1, width/3, label='1min')
-        rects3 = axs[i].bar(x + 0 * width / 3, min_2, width/3, label='2min')
-        rects4 = axs[i].bar(x + 1 * width / 3, min_30, width/3, label='30min')
+        # rects1 = axs[i].bar(x - 2 * width / 3, baseline, width / 3, label='baseline')
+        rects2 = axs[i].bar(x - 1 * width / 3, svm_acc, width / 3, label='SVM')
+        rects3 = axs[i].bar(x + 0 * width / 3, nb_acc, width / 3, label='NB')
+        rects4 = axs[i].bar(x + 1 * width / 3, knn_acc, width / 3, label='KNN')
 
         # Add some text for labels, title and custom x-axis tick labels, etc.
         axs[i].set_ylabel('Balanced Accuracy')
@@ -36,33 +52,33 @@ if __name__ == '__main__':
         axs[i].set_xticklabels(labels)
         axs[i].set_ylim((0, 1))
         axs[i].legend(loc='upper left')
-        axs[i].annotate(xy = (1,0.8), text = 'Data from {}dpf'.format(day))
+        axs[i].annotate(xy=(1, 0.8), text='Data from {}dpf'.format(day))
         # axs[i].axhline(y=0.5, ls='--', c='k')
-
 
         s = 12
         p_t = 0.05
-        axs[i].scatter(x - 2 * width / 3, (baseline_pvalue <p_t) * (baseline+0.02), marker='*', c='k', s=s)
-        axs[i].scatter(x - 1 * width / 3, (min_1_pvalue <p_t) * (min_1+0.02), marker='*', c='k', s=s)
-        axs[i].scatter(x + 0 * width / 3, (min_2_pvalue <p_t) * (min_2+0.02), marker='*', c='k', s=s)
-        axs[i].scatter(x + 1 * width / 3, (min_30_pvalue <p_t) * (min_30+0.02), marker='*', c='k', s=s)
+        # axs[i].scatter(x - 2 * width / 3, (baseline_pvalue < p_t) * (baseline + 0.02), marker='*', c='k', s=s)
+        axs[i].scatter(x - 1 * width / 3, (svm_pvalue < p_t) * (svm_acc + 0.02), marker='*', c='k', s=s)
+        axs[i].scatter(x + 0 * width / 3, (nb_pvalue < p_t) * (nb_acc + 0.02), marker='*', c='k', s=s)
+        axs[i].scatter(x + 1 * width / 3, (knn_pvalue < p_t) * (knn_acc + 0.02), marker='*', c='k', s=s)
 
         p_t = 0.01
-        axs[i].scatter(x - 2 * width / 3, (baseline_pvalue < p_t) * (baseline + 0.04), marker='*', c='k', s=s)
-        axs[i].scatter(x - 1 * width / 3, (min_1_pvalue < p_t) * (min_1 + 0.04), marker='*', c='k', s=s)
-        axs[i].scatter(x + 0 * width / 3, (min_2_pvalue < p_t) * (min_2 + 0.04), marker='*', c='k', s=s)
-        axs[i].scatter(x + 1 * width / 3, (min_30_pvalue < p_t) * (min_30 + 0.04), marker='*', c='k', s=s)
+        # axs[i].scatter(x - 2 * width / 3, (baseline_pvalue < p_t) * (baseline + 0.04), marker='*', c='k', s=s)
+        axs[i].scatter(x - 1 * width / 3, (svm_pvalue < p_t) * (svm_acc + 0.04), marker='*', c='k', s=s)
+        axs[i].scatter(x + 0 * width / 3, (nb_pvalue < p_t) * (nb_acc + 0.04), marker='*', c='k', s=s)
+        axs[i].scatter(x + 1 * width / 3, (knn_pvalue < p_t) * (knn_acc + 0.04), marker='*', c='k', s=s)
 
         p_t = 0.001
-        axs[i].scatter(x - 2 * width / 3, (baseline_pvalue < p_t) * (baseline + 0.06), marker='*', c='k', s=s)
-        axs[i].scatter(x - 1 * width / 3, (min_1_pvalue < p_t) * (min_1 + 0.06), marker='*', c='k', s=s)
-        axs[i].scatter(x + 0 * width / 3, (min_2_pvalue < p_t) * (min_2 + 0.06), marker='*', c='k', s=s)
-        axs[i].scatter(x + 1 * width / 3, (min_30_pvalue < p_t) * (min_30 + 0.06), marker='*', c='k', s=s)
+        # axs[i].scatter(x - 2 * width / 3, (baseline_pvalue < p_t) * (baseline + 0.06), marker='*', c='k', s=s)
+        axs[i].scatter(x - 1 * width / 3, (svm_pvalue < p_t) * (svm_acc + 0.06), marker='*', c='k', s=s)
+        axs[i].scatter(x + 0 * width / 3, (nb_pvalue < p_t) * (nb_acc + 0.06), marker='*', c='k', s=s)
+        axs[i].scatter(x + 1 * width / 3, (knn_pvalue < p_t) * (knn_acc + 0.06), marker='*', c='k', s=s)
 
-    if method == 'NB':
-        fig.suptitle('Classification Using {}'.format('Naive\nBayes'), fontsize=16)
-    else:
-        fig.suptitle('Classification Using {}'.format(method), fontsize=16)
+    # if method == 'NB':
+    #     fig.suptitle('Classification Using {}'.format('Naive\nBayes'), fontsize=16)
+    # else:
+    #     fig.suptitle('Classification Using {}'.format(method), fontsize=16)
 
     fig.tight_layout()
-    plt.savefig(method+'.png', dpi=600)
+    plt.savefig('/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/ML_results/ML_acc'+
+                '{}W_batch{}.png'.format(power, batch), dpi=600)

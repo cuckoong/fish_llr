@@ -125,19 +125,21 @@ def get_features(data, time=30, period=30):
     bin_well = int(60 / sr)
 
     if period == 'baseline':
-        data_base = data[:, :30 * bin_well, :]
-        features = calculate_features(data_base)
+        win_start = 0
+        win_end = 30 * bin_well
+        data_period = data[:, win_start: win_end, :]
+        features = calculate_features(data_period)
+
     else:
         # Two rounds of ON/OFF
         # Baseline-ON-OFF-ON-OFF
         features_period_list = []
-        for i in range(5):
+        for i in range(1, 5):
             win_start = i * 30 * bin_well
             win_end = i * 30 * bin_well + period * bin_well
             data_period = data[:, win_start: win_end, :]
             features_period = calculate_features(data_period)
             features_period_list.append(features_period)
-
         features = np.concatenate(features_period_list, axis=1)
 
     return features
