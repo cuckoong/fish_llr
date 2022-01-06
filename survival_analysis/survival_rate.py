@@ -2,18 +2,8 @@ import numpy as np
 from lifelines import KaplanMeierFitter
 from matplotlib import pyplot as plt
 
+
 def get_time_observe(day_num):
-    # Time = np.concatenate((np.repeat(0, day_num[0]),
-    #                        np.repeat(5, day_num[0]),
-    #                        np.repeat(6, day_num[0]),
-    #                        np.repeat(7, day_num[0]),
-    #                        np.repeat(8, day_num[0])),
-    #                        axis=0)
-    # Observed = np.concatenate((np.repeat(0, day_num[0]),
-    #                            np.repeat(0, day_num[1]), np.repeat(1, day_num[0]-day_num[1]),
-    #                            np.repeat(0, day_num[2]), np.repeat(1, day_num[0]-day_num[2]),
-    #                            np.repeat(0, day_num[3]), np.repeat(1, day_num[0]-day_num[3]),
-    #                            np.repeat(0, day_num[4]), np.repeat(1, day_num[0]-day_num[4])), axis=0)
     Time = np.concatenate((np.repeat(5, day_num[0]-day_num[1]),
                            np.repeat(6, day_num[1]-day_num[2]),
                            np.repeat(7, day_num[2]-day_num[3]),
@@ -25,13 +15,14 @@ def get_time_observe(day_num):
                                np.repeat(0, day_num[4]), np.repeat(1, day_num[3]-day_num[4])), axis=0)
     return Time, Observed
 
-day_0w_exp = (120, 96, 72, 70, 68)
-day_1w_exp = (120, 111, 111, 111, 109)
-day_2w_exp = (108, 96, 91, 92, 91)
 
-day_0w_control = (96, 93, 92, 91, 81)
-day_1w_control = (96, 77, 75, 73, 72)
-day_2w_control = (96, 67, 58, 52, 51)
+day_0w_exp_1 = (96, 95, 90, 90, 90, 90, 90)
+day_5w_exp_1 = (120, 117, 117, 111, 111, 111, 111)
+day_5w_exp_2 = (120, 119, 110, 101, 101, 101, 101)
+
+day_0w_control = (96, 96, 95, 90, 90, 89, 88)
+day_5w_control_1 = (96, 95, 95, 70, 70, 70, 70)
+day_5w_control_2 = (96, 96, 87, 84, 84, 84, 84)
 
 day_exp = day_2w_exp
 day_control = [day_0w_control[i] +  day_1w_control[i] + day_2w_control[i] for i in range(len(day_0w_control))]

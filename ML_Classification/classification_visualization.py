@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
     power = 0
-    batch = 'all'
+    batch = 1
     methods = ['SVM', 'NB', 'KNN']
     df_svm = pd.read_csv('/home/tmp2/PycharmProjects/fish_llr/'
                          'Analysis_Results/ML_results/ML_acc/SVM_{}w_{}.csv'.format(power, batch))

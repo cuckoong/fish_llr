@@ -54,11 +54,11 @@ def clf(data, label, case='SVM'):
 
 
 if __name__ == "__main__":
-    case = 'KNN'
-    power = 5
+    case = 'NB'
+    power = 0
     times = ['baseline', 1, 2, 30]
     days = [5, 6, 7, 8]
-    batches = [1, 2]
+    batches = [1]
 
     power_list = []
     time_list = []
@@ -94,4 +94,4 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(data=dict(power=power_list, time=time_list, day=day_list, acc=acc_list, pvalue=pvalue_list))
     df.to_csv('/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/ML_results/ML_acc/' + case +
-              '_{}w_all.csv'.format(power))
+              '_{}w_1.csv'.format(power))

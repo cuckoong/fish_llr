@@ -3,11 +3,33 @@ set.seed(345)
 # load data from files
 library(readr)
 library(dplyr)
+library(RcppRoll)
 
 # load data ------------------------------------------------------------------------------------------------------------
-myData <-  read_csv('/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/stat_data/burdur_5w_batch2_burst4.csv')
+myData <-  read_csv('/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/stat_data/burdur_5w_batch1_burst4.csv')
+
+# integraon over one min (60s)
 myData <-  myData %>%
-  select(burdur, animal, end, label, radiation, day) %>%
+  select(burdur, animal, end, label, day) %>%
+  mutate(animal = as.factor(animal),
+     label = as.factor(label),
+     day = as.factor(day)) %>%
+  mutate(inte_end = end %/% 60) %>%
+  group_by(day, label, animal, inte_end) %>%
+  summarise(inte_burdur = sum(burdur)) %>%
+  mutate(stim_stage = case_when(inte_end <= 30 ~ inte_end,
+                              inte_end > 30 & inte_end <= 90 ~ inte_end,
+                              inte_end > 90 & inte_end <= 150 ~ inte_end - 60)) %>%
+  mutate(stim_stage = as.factor(stim_stage)) %>%
+  select(inte_burdur, stim_stage, animal, label, day)
+
+
+library(ggplot2)
+ggplot(data = myData, aes(x = stim_stage, y = inte_burdur,color = label))+geom_line()
+
+
+myData <-  myData %>%
+  select(burdur, animal, end, label, day) %>%
   filter((end > 1770 & end <= 1830) | (end > 3570 & end <= 3630) |
   (end > 5370 & end <= 5430) |(end > 7170 & end <= 7230)) %>%
   mutate(stim_stage = case_when(end <= 1830 ~ end-1770,
@@ -31,11 +53,11 @@ myData <-  myData %>%
 library(nlme)
 
 # burdur, aname, label, day, stim_stage, stim_group
-baseline <-  lme(burdur~1, random=~1|animal/stim_stage/day, data = myData, method='ML')
+baseline <-  lme(inte_burdur~1, random=~1|animal/stim_stage/day, data = myData, method='ML')
 # save model
-dir <-  'Analysis_Results/Statistical_Results/linear_mixed_model_burst4_5W_batch2'
+dir <-  'Analysis_Results/Statistical_Results/linear_mixed_model_burst4_5W_batch1'
 
-save(baseline, file= paste(dir,'lme_burst4_baseline.rda', sep="/"))
+save(baseline, file= paste(dir,'lme_burst4_baseline_integrate.rda', sep="/"))
 
 # load('lme_burst4_baseline.rda')
 radiationM <- update(baseline, .~. + label)

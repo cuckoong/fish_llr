@@ -5,9 +5,9 @@ from utilitis import *
 
 if __name__ == '__main__':
     # Load data from csv file
-    radiation = 5
-    batch = 2
-    result_dir = '/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/ML_results/burst_4/inte_end{}/'.format(batch)
+    radiation = 0
+    batch = 1
+    result_dir = '/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/ML_results/burst_4/batch{}/'.format(batch)
     dir = '/home/tmp2/PycharmProjects/fish_llr/Data/burst4/{}w_{}/'.format(radiation, batch)
     format = '.csv'
     metric_list = ['frect', 'fredur', 'midct', 'middur', 'burct', 'burdur',
@@ -36,4 +36,4 @@ if __name__ == '__main__':
             for period in periods:  # time (minutes) after on/off stimulus
                 features = get_features(data, period=period)
                 np.save(result_dir + filename + '-' + str(period) + 'min-feature.npy', features)
-            # np.save(result_dir + filename + '-label.npy', labels[labels >= 0])
+            np.save(result_dir + filename + '-label.npy', labels[labels >= 0])

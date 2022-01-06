@@ -6,9 +6,9 @@ library(readr)
 library(dplyr)
 library(plotrix)
 
-minmax_scale <- function(x){
-  return((x - min(x)) / (max(x) - min(x)))
-}
+# minmax_scale <- function(x){
+#   return((x - min(x)) / (max(x) - min(x)))
+# }
 
 integrate_df <- function(file, batch_num, selected_day, integrate_duration=60){
   myData <- read_csv(file)
@@ -16,21 +16,20 @@ integrate_df <- function(file, batch_num, selected_day, integrate_duration=60){
     filter(day == selected_day) %>%
     select(burdur, animal, end, label, day) %>%
     mutate(animal = as.factor(animal),
-       label = as.factor(label),
+       radiation_label = as.factor(1-label),
        day = as.factor(day)) %>%
     mutate(inte_end = (end-1) %/% integrate_duration + 1) %>%
-    group_by(day, label, animal, inte_end) %>%
+    group_by(day, radiation_label, animal, inte_end) %>%
     summarise(inte_burdur = sum(burdur)) %>%
     ungroup() %>%
-    group_by(day, label, animal) %>%
-    mutate(minmax_bur = minmax_scale(inte_burdur)) %>%
+    group_by(day, radiation_label, animal) %>%
+    # mutate(minmax_bur = minmax_scale(inte_burdur)) %>%
     mutate(batch = batch_num) %>%
     mutate(animal_batch = paste(batch, animal, sep='-')) %>%
     mutate(animal_batch = as.factor(animal_batch),
-           batch = as.factor(batch),
-           label = as.factor(label)) %>%
+           batch = as.factor(batch)) %>%
     ungroup() %>%
-    select(animal_batch, batch, label,inte_burdur, minmax_bur, inte_end)
+    select(animal_batch, batch, radiation_label, inte_end, inte_burdur)
   return(myData)
 }
 
@@ -43,63 +42,58 @@ myData2 <- integrate_df(file2, batch_num = 2, selected_day = selected_day)
 # visualize all inte_end data
 myData <- rbind(myData1, myData2)
 
+myData <-  myData %>%
+  group_by(animal_batch) %>%
+  mutate(stim_baseline = case_when(inte_end <= 30 ~ 0,
+                                inte_end > 30 ~ 1)) %>%
+  mutate(rm_burdur = (inte_burdur - mean(inte_burdur[stim_baseline==0]))) %>%
+  filter(stim_baseline == 1) %>%
+  select(animal_batch, radiation_label, inte_end, rm_burdur)
+
 Group_Data <- myData %>%
-  group_by(label, inte_end, batch) %>%
-  summarise(mean_burdur = mean(inte_burdur),
-            sd_burdur = std.error(inte_burdur))
+  group_by(radiation_label, inte_end) %>%
+  summarise(median_burdur = median(rm_burdur),
+            mean_burdur = mean(rm_burdur),
+            sd_burdur = sd(rm_burdur),
+            Q1 = quantile(rm_burdur, 0.05),
+            Q3 = quantile(rm_burdur, 0.95))
 
 # visualize individual fish activity
 library(ggplot2)
-ggplot(data = Group_Data, aes(x=inte_end, y=mean_burdur, group = label, color = label)) +
+library(envalysis)
+ggplot(data = Group_Data, aes(x=inte_end, y=mean_burdur, group = radiation_label,
+                              color = radiation_label)) +
+  # geom_pointrange(aes(ymin=Q1, ymax=Q3)) +
   geom_pointrange(aes(ymin=mean_burdur-sd_burdur, ymax=mean_burdur+sd_burdur)) +
-  geom_line() + facet_grid(.~batch)
+  geom_line() + ylab('Burst Duration (s)') + xlab('Tracking Time (min)') +
+  scale_color_discrete(name='', labels = c('Control', '5W'), breaks = c(0, 1)) +
+  theme(legend.position = 'right') +
+  annotate("text", x = 15, y = 12, label = 'Baseline\nOFF', color = 'Blue') +
+  annotate("text", x = c(45,105), y = 12, label = 'ON', color = 'Red') +
+  annotate("text", x = c(75,135), y = 12, label = 'OFF', color = 'Blue') +
+  geom_vline(xintercept = c(30, 60, 90, 120), linetype = 'dotted') +
+  theme_publish()
 
-
-myData <-  myData %>%
-  mutate(stim_stage = case_when(inte_end <= 90 ~ inte_end,
-                                inte_end > 90 ~ (inte_end - 60))) %>%
-  mutate(stim_stage = as.factor(stim_stage),
-         inte_end = as.factor(inte_end))
+ggsave(paste0('/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/Visualization/Visual_', 5, 'W_day', selected_day, '_', 'all', '.png'), width=8, height=6, units='in', dpi=300)
 
 
 # 2 way anova with repeated measure
 library(nlme)
 # save model
-dir <-  paste('/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/Statistical_Results/5W/batch/day',selected_day, sep='')
+dir <- paste0('/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/Statistical_Results/5W/inte_end/day',
+              selected_day)
+# anova
+attach(myData)
+nestinginfo <- groupedData(rm_burdur ~ radiation_label | animal_batch, data= myData)
+fit.compsym <- gls(rm_burdur ~ factor(radiation_label)*factor(inte_end), data=nestinginfo,
+                   corr=corCompSymm(, form= ~ 1 | animal_batch))
 
-# burdur, aname, label, day, stim_stage, stim_group
-# baseline <-  lme(inte_burdur~1, random=~1|animal_batch/stim_stage, data = myData, method='ML',
-                 # control=lmeControl(opt = "optim"))
-baseline <-  lme(inte_burdur~1, random=~1|animal_batch/inte_end, data = myData, method='ML',
-                  control=lmeControl(opt = "optim"))
-save(baseline, file= paste(dir,'lme_burst4_baseline_integrate.rda', sep="/"))
+# fit.nostruct <- gls(inte_burdur ~ factor(radiation_label)*factor(inte_end), data=nestinginfo,
+#                     corr=corSymm(, form= ~ 1 | animal_batch), weights = varIdent(form = ~ 1 | inte_end))
+fit.ar1 <- gls(rm_burdur ~ factor(radiation_label)*factor(inte_end), data=nestinginfo,
+               corr=corAR1(, form= ~ 1 | animal_batch))
 
-# load('lme_burst4_baseline.rda')
-radiationM <- update(baseline, .~. + label)
-save(radiationM, file= paste(dir,'lme_burst4_radiationM.rda', sep="/"))
-
-batchM <- update(radiationM, .~. + batch)
-save(batchM, file= paste(dir,'lme_burst4_batchM.rda', sep="/"))
-
-# stim_stageM <- update(batchM, .~. + stim_stage)
-stim_stageM <- update(batchM, .~. + inte_end)
-save(stim_stageM, file= paste(dir,'lme_burst4_stim_stageM.rda', sep="/"))
-
-# stim_groupM <- update(stim_stageM, .~. + stim_group)
-radiation_batch <- update(stim_stageM, .~. + label:batch)
-save(radiation_batch, file= paste(dir, 'lme_burst4_radiation_batch.rda', sep="/"))
-
-# radiation_stim <- update(radiation_batch, .~. + label:stim_stage)
-radiation_stim <- update(radiation_batch, .~. + label:inte_end)
-save(radiation_stim, file= paste(dir, 'lme_burst4_radiation_stim.rda', sep="/"))
-
-# batch_stim <- update(radiation_stim, .~. + inte_end:stim_stage)
-batch_stim <- update(radiation_stim, .~. + batch:inte_end)
-save(batch_stim, file= paste(dir, 'lme_burst4_batch_stim.rda', sep="/"))
-
-# all <- update(batch_stim, .~. + inte_end:stim_stage:label)
-all <- update(batch_stim, .~. + batch:inte_end:label)
-save(all, file= paste(dir, 'lme_burst4_all.rda', sep="/"))
-
-# visualization
-anova(baseline,radiationM, batchM, stim_stageM, radiation_batch, radiation_stim, batch_stim, all)
+anova(fit.compsym, fit.ar1)#, fit.ar1het) #compares the models
+save(fit.ar1, file= paste(dir, 'ar1_all.rda', sep="/"))
+anova(fit.ar1)
+tmp = summary(fit.ar1)
