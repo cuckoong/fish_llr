@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
-    power = 0
+    power = 1.2
     batch = 1
     methods = ['SVM', 'NB', 'KNN']
     df_svm = pd.read_csv('/home/tmp2/PycharmProjects/fish_llr/'
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     x = np.arange(len(labels))
     # the label locations
     width = 0.35  # the width of the bars
-    days = [5, 6, 7, 8]
+    days = [5]#, 6, 7, 8]
     fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(7, 7))  # , sharey=True, sharex=True)
     axs = axs.flatten()
 

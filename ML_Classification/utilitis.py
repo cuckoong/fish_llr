@@ -117,8 +117,8 @@ def get_features(data, time=30, period=30):
     """
 
     :param data: quantization data
-    :param time: ON/OFF time duration
-    :param period: Time periods we use to calculate the features
+    :param time: ON/OFF time duration (min)s
+    :param period: Time periods we use to calculate the features (min)
     :return: features for classification
     """
     sr = 1

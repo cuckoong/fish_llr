@@ -55,10 +55,12 @@ def clf(data, label, case='SVM'):
 
 if __name__ == "__main__":
     case = 'NB'
-    power = 0
+    power = 1.2
     times = ['baseline', 1, 2, 30]
-    days = [5, 6, 7, 8]
+    days = [5]#, 6, 7, 8]
     batches = [1]
+    plates = [1]
+    hour = 60
 
     power_list = []
     time_list = []
@@ -71,14 +73,16 @@ if __name__ == "__main__":
             data_list = []
             label_list = []
             for batch in batches:
-                dir = '/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/ML_results/burst_4/batch{}/'.format(
-                    batch)
-                for plate in [1, 2]:
+                dir = '/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/ML_results/burst_4/' +\
+                      'batch{}/'.format(batch)
+                        # 'ch/'
+                for plate in plates:
                     data_plate = np.load(
-                        dir + str(power) + 'W-60h-' + str(day) + 'dpf-0' + str(plate) + '-' + str(time) +
-                        'min-feature.npy')
+                        dir + str(power) + 'W-'+str(hour)+'h-' + str(day) + 'dpf-0' + str(plate) + '-' + str(time) +
+                        'min-feature.npy', allow_pickle=True)
                     label_plate = np.load(
-                        dir + str(power) + 'W-60h-' + str(day) + 'dpf-0' + str(plate) + '-' + 'label.npy')
+                        dir + str(power) + 'W-'+str(hour)+'h-' + str(day) + 'dpf-0' + str(plate) + '-' + 'label.npy',
+                        allow_pickle=True)
                     data_list.append(data_plate)
                     label_list.append(label_plate)
 
@@ -94,4 +98,4 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(data=dict(power=power_list, time=time_list, day=day_list, acc=acc_list, pvalue=pvalue_list))
     df.to_csv('/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/ML_results/ML_acc/' + case +
-              '_{}w_1.csv'.format(power))
+              '_{}w_{}.csv'.format(power, batch))
