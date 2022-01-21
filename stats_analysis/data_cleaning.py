@@ -8,7 +8,7 @@ Generate the burst duration from raw data for statistical analysis on light-indu
 '''
 
 if __name__ == '__main__':
-    days = [6]
+    days = [5, 6, 7, 8]
     # TODO
     radiations = [1.2]
     plates = [1]

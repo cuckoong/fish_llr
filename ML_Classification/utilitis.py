@@ -58,67 +58,78 @@ def bout(grouped_L, df, mode=0):
     bout_list = grouped_L[(grouped_L[:, 0] == mode) & (grouped_L[:, 1] >= 2), 1]
     try:
         first_bout = np.where((grouped_L[:, 0] == mode) & (grouped_L[:, 1] >= 1))[0][0]  # first bout
-        first_bout_length = np.sum(grouped_L[:first_bout, 1])
+        bout_latency = np.sum(grouped_L[:first_bout, 1])
     except IndexError:
         if mode == 0:
             print('no rest bout here, return length as whole length')
         elif mode == 1:
             print('no active bout here, return length as whole length')
-        first_bout_length = df.shape[1]
+        bout_latency = df.shape[1]
     if len(bout_list) > 0:
-        average_bout = np.mean(bout_list)
+        average_bout_length = np.mean(bout_list)
+        # average_bout = np.sum(bout_list)
     else:
-        average_bout = 0
-    return num_bout, average_bout, first_bout_length
+        average_bout_length = 0
+    return num_bout, average_bout_length, bout_latency
 
 
 # Number of Rest Bout & Active Bout
 def num_rest_active_bout(df):
     bur_label = 5
     burst_data = df[:, :, bur_label]
-    tmp = burst_data > 0
+
+    # total_active_time, including rest bout
+    total_active_time = np.sum(burst_data, axis=1)
+
+    # not resting filter
+    waking_filter = burst_data > (0.1 / 60)
+    # waking activity (activity not in rest bout)
+    waking_data = burst_data * waking_filter
+    waking_time = np.sum(waking_data, axis=1)
+
+    # rest filter
+    rest_filter = burst_data <= (0.1 / 60)
+    freeze_data = 1 - burst_data
+    # change negative number to 0
+    freeze_data[freeze_data < 0] = 0
+    # rest activity (activity in rest bout)
+    rest_data = freeze_data * rest_filter
+    # total rest activity
+    total_rest_time = np.sum(rest_data, axis=1)
+
     num_rest_bout_list = []
-    num_active_bout_list = []
-    length_of_1st_rest_bout = []
-    length_of_1st_active_bout = []
     average_rest_bout_list = []
-    average_active_bout_list = []
-    entropy_list = []
+    latency_rest_bout = []
 
     for j in range(len(df)):
         # sample entropy
-        sample_entropy = sampen(burst_data[j, :])
-        entropy_list.append(sample_entropy)
+        # sample_entropy = sampen(burst_data[j, :])
+        # entropy_list.append(sample_entropy)
 
-        grouped_L = [(k, sum(1 for i in g)) for k, g in groupby(tmp[j])]
+        grouped_L = [(k, sum(1 for i in g)) for k, g in groupby(waking_filter[j])]
         grouped_L = np.array(grouped_L)
 
-        # rest: 0, active 1
-        # number of rest
-        num_rest_bout, average_rest_bout, first_rest_bout_length = bout(grouped_L, df, mode=0)
-        num_active_bout, average_active_bout, first_active_bout_length = bout(grouped_L, df, mode=1)
-
-        # number of active
+        num_rest_bout, average_rest_bout_length, rest_bout_latency = bout(grouped_L, df, mode=0)
         num_rest_bout_list.append(num_rest_bout)
-        num_active_bout_list.append(num_active_bout)
+        average_rest_bout_list.append(average_rest_bout_length)
+        latency_rest_bout.append(rest_bout_latency)
 
-        length_of_1st_rest_bout.append(first_rest_bout_length)
-        length_of_1st_active_bout.append(first_active_bout_length)
+    # list to array
+    num_rest_bout_array = np.array(num_rest_bout_list)
+    average_rest_bout_array = np.array(average_rest_bout_list)
+    latency_rest_bout_array = np.array(latency_rest_bout)
 
-        average_rest_bout_list.append(average_rest_bout)
-        average_active_bout_list.append(average_active_bout)
-
-    return num_rest_bout_list, num_active_bout_list, \
-           length_of_1st_rest_bout, length_of_1st_active_bout, \
-           average_rest_bout_list, average_active_bout_list, entropy_list
+    return total_active_time, waking_time, total_rest_time, \
+           num_rest_bout_array, average_rest_bout_array, latency_rest_bout_array
 
 
-def get_features(data, time=30, period=30):
+def get_features(data, time=30, period=30, feature_func='all'):
     """
 
     :param data: quantization data
     :param time: ON/OFF time duration (min)s
     :param period: Time periods we use to calculate the features (min)
+    :param feature_list: list of features we want to extract
     :return: features for classification
     """
     sr = 1
@@ -128,7 +139,7 @@ def get_features(data, time=30, period=30):
         win_start = 0
         win_end = 30 * bin_well
         data_period = data[:, win_start: win_end, :]
-        features = calculate_features(data_period)
+        features = num_rest_active_bout(data_period, feature_func)
 
     else:
         # Two rounds of ON/OFF
@@ -138,21 +149,9 @@ def get_features(data, time=30, period=30):
             win_start = i * 30 * bin_well
             win_end = i * 30 * bin_well + period * bin_well
             data_period = data[:, win_start: win_end, :]
-            features_period = calculate_features(data_period)
-            features_period_list.append(features_period)
+            features_period = num_rest_active_bout(data_period)
+            features_period_array = np.stack(features_period, axis=1)
+            features_period_list.append(features_period_array)
         features = np.concatenate(features_period_list, axis=1)
 
-    return features
-
-
-def calculate_features(df):
-    max_amplitude = Maximal_Amplitude(df)
-    mean_total_response = Mean_of_Total_Response(df)
-    mean_active_response = Mean_of_Active_Response(df)
-    rout_list = num_rest_active_bout(df)
-    features_list = [np.array(i) for i in rout_list]
-    features_list.append(max_amplitude)
-    features_list.append(mean_total_response)
-    features_list.append(mean_active_response)
-    features = np.stack(features_list, axis=1)
     return features
