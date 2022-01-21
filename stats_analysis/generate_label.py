@@ -4,7 +4,7 @@ import pandas as pd
 
 if __name__ == '__main__':
     exp = '1.2W-60h'
-    days = [6]
+    days = [5, 6, 7, 8]
     batch = 1
     for day in days:
         file = '/home/tmp2/PycharmProjects/fish_llr/Data/burst4/{}-batch{}/{}-{}dpf-01.csv'.format(exp, batch, exp, day)
@@ -19,9 +19,8 @@ if __name__ == '__main__':
         # label_list =       [0,1]
         # count_label_list = [48,48] # 3W-60H-2
 
-        label_list =       [0, -1, 0, 0, -1, 0, 0, 0, 1, 1, 1, -1, 1, -1]
-        count_label_list = [2, 1, 9, 7, 1, 4, 24, 2, 10, 24, 6, 2, 1, 3] # 1.2W-60H-1
-
+        label_list =      [0, -1, 0, 0, -1, 0, -1, 0, 0, 0, 1, 1, 1, -1, 1, -1]
+        count_label_list = [2, 1, 9, 3, 1, 3, 1, 4, 24, 2, 10, 24, 6, 2, 1, 3] # 1.2W-60H-1
 
         # label_list = [-1, 0, -1, 0, -1, 1, -1, 1]
         # count_label_list = [31, 5, 43, 17] # 3W-24H
