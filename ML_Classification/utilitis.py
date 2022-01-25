@@ -82,11 +82,14 @@ def bout(grouped_L, df):
 def num_rest_active_bout(df):
     bur_label = 5
     mid_label = 3
-    burst_data = df[:, :, bur_label]# + df[:, :, mid_label]
+
+    # all activity including mid and burst
+    all_active_data = df[:, :, bur_label] + df[:, :, mid_label]
+    burst_data = df[:, :, bur_label]
     active_filter = burst_data > 0
 
     # total_active_time, including rest bout
-    total_active_time = np.sum(burst_data, axis=1)
+    total_active_time = np.sum(all_active_data, axis=1)
 
     # not resting filter
     waking_filter = burst_data > (0.1 / 60)
@@ -96,7 +99,7 @@ def num_rest_active_bout(df):
 
     # rest filter
     rest_filter = burst_data <= (0.1 / 60)
-    freeze_data = 1 - burst_data
+    freeze_data = 1 - all_active_data
     # change negative number to 0
     freeze_data[freeze_data < 0] = 0
     # rest activity (activity in rest bout)
