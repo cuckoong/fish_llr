@@ -37,7 +37,7 @@ get_df <- function(file, batch_num, selected_day, integrate_duration = 60){
 setwd('/Users/panpan/PycharmProjects/old_project/fish_llr')
 # file1 <- 'Processed_data/quantization/Tg/stat_data/burdur_1.2w_60h_batch1_burst4.csv'
 file1 <- 'Processed_data/quantization/Tg/stat_data/all_1.2w_60h_batch1_burst4.csv'
-selected_day <- 5
+selected_day <- 6
 
 # intergrate every 60s
 myData <- get_df(file1, batch_num = 1, selected_day = selected_day)
