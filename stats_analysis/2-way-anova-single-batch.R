@@ -16,7 +16,7 @@ integrate_df <- function(file, batch_num, selected_day, integrate_duration=60){
     filter(day == selected_day) %>%
     select(burdur, animal, end, label, day) %>%
     mutate(animal = as.factor(animal),
-       radiation_label = as.factor(1-label),
+       radiation_label = as.factor(label),
        day = as.factor(day)) %>%
     mutate(inte_end = (end-1) %/% integrate_duration + 1) %>%
     group_by(day, radiation_label, animal, inte_end) %>%
@@ -33,10 +33,8 @@ integrate_df <- function(file, batch_num, selected_day, integrate_duration=60){
   return(myData)
 }
 
-file1 <- '/home/tmp2/PycharmProjects/fish_llr/Analysis_Results/stat_data/burdur_0w_batch1_burst4.csv'
-selected_day <- 7
-
-detach(myData)
+file1 <- '/Users/panpan/PycharmProjects/old_project/fish_llr/Analysis_Results/stat_data/burdur_1.2w_60h_batch3_burst4.csv'
+selected_day <- 5
 
 myData <- integrate_df(file1, batch_num = 1, selected_day = selected_day)
 
