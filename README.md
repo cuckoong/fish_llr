@@ -32,9 +32,18 @@ ML
 1. generate label with stats_analysis/generate_label.py
 2. extract bout rest/active features with ML_Classification/Quan_Data_preprocessing.py 
 3. generate labels again with Data_explore/gen_labels.py
-4. do classifcation with ML_Classification/clustering.py
+4. do classifcation with ML_Classification/clustering.py2
 
-Statistics
+Statistics for burst duration
 1. generate label with stats_analysis/generate_label.py
 2. get burst duration from data and check if fish do not move all the time,  by stats_data_cleaning.py
-3. 
+3. visualize burst duration with stats_visualize_burst.R, result in Figures/Stats/Quantization/Tg, 
+  all means all activity (burst + mid), burst mean only burst, raw is raw, scale is min_max scaling.
+
+Statistics for swimming distance
+1. using labels from results in Processed_data/quantization/Tg/batch1/labels, 
+   results from stats_analysis/generate_label.py
+2. get swimming distance (sum) from data and summarise data into one file, by stats_data_cleaning_distance.py, 
+   results in Processed_data/tracking/Tg/stat_data named as all_1.2w_60h_batch1_burst4.csv
+3. Visualize swimming distance with stats_visualize_distance.R, result in Figures/Stats/Tracking/Tg, 
+   all means all activity (mid + large),  raw is raw, scale is min_max scaling.
