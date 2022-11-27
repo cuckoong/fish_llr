@@ -16,7 +16,7 @@ if __name__ == '__main__':
     plates = [1]
     hour = 60
     burst_threshold = 4
-    batch = 1
+    batch = 2
 
     feature_dir = 'Data/Tracking/Tg/{}W-batch{}/'.format(radiation, batch)
     label_dir = 'Data/Quantization/Tg/{}W-batch{}/'.format(radiation, batch)

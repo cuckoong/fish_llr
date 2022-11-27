@@ -85,7 +85,7 @@ if __name__ == "__main__":
     power_levels = [1.2]  # [0, 1.2, 3]
     time_in_min = 30  # using all 30 minutes data
     days = [5, 6, 7, 8]
-    batches = [1]  # [1, 2]
+    batches = [2]  # [1, 2]
     plates = [1]  # [1, 2]
     hour = 60
 

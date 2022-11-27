@@ -7,7 +7,7 @@ if __name__ == '__main__':
     # Load data from csv file
     fish_type = 'Tg'  # ['WT', 'Tg']
     radiation = 1.2
-    batch = 1
+    batch = 2
     hour = 60
     days = [5, 6, 7, 8]
     plates = [1]
@@ -25,12 +25,12 @@ if __name__ == '__main__':
             data_cp['time'] = data_cp['end'] // 60
             data_metric = data_cp[metric_list]
             # group each 60 seconds into one row
-            data_mean = data_metric.groupby(['aname', 'time']).sum().reset_index()
-            data_mean.to_csv(os.path.join(result_dir, 'raw_features', filename + '-data.csv'), index=False)
+            data_sum = data_metric.groupby(['aname', 'time']).sum().reset_index()
+            data_sum.to_csv(os.path.join(result_dir, 'raw_features', filename + '-data.csv'), index=False)
             # labels
             labels = np.load(os.path.join(data_dir, filename + '-label.npy'))
-            data_mean.sort_values(['time', 'aname'], inplace=True)
-            data = data_mean.values
+            data_sum.sort_values(['time', 'aname'], inplace=True)
+            data = data_sum.values
             data = data.reshape(-1, 96, len(metric_list))
             data = np.transpose(data, (1, 0, 2))
 

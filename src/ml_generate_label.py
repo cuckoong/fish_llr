@@ -8,17 +8,20 @@ os.chdir('/Users/panpan/PycharmProjects/old_project/fish_llr')
 if __name__ == '__main__':
     exp = '1.2W'
     days = [5, 6, 7, 8]
-    batch = 3
+    batch = 2
     plate = 1
     for day in days:
-        file = 'Data/Quantization/{}-batch{}/{}-60h-{}dpf-0{}.csv'.format(exp, batch, exp, day, plate)
+        file = 'Data/Quantization/Tg/{}-batch{}/{}-60h-{}dpf-0{}.csv'.format(exp, batch, exp, day, plate)
         data = pd.read_csv(file)
         # control: 0
         # exp: 1
         # null: -1
 
-        label_list = [0, 1, -1]  # first 3 rows are control; then 3 rows are exp; then 3 rows are null
-        count_label_list = [36, 36, 24]  # 1.2W-60H-batch3
+        label_list = [0, 1]
+        count_label_list = [48, 48]
+
+        # label_list = [0, 1, -1]  # first 3 rows are control; then 3 rows are exp; then 3 rows are null
+        # count_label_list = [36, 36, 24]  # 1.2W-60H-batch3
 
         # label_list = [1, 0]
         # count_label_list = [48, 48] # 5W-60H-1
