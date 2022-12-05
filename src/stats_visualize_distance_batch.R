@@ -34,17 +34,21 @@ get_df <- function(file, batch_num, selected_day, integrate_duration = 60){
 }
 
 
-BATCH <- 2  # 1 or 2
+BATCH <- c(1, 2)  # 1 or 2
 POWER <- 1.2  # power of the burst activity
-ACTIVITY_TYPE <- 'all' #'burdur' # 'burdur' or 'all'
+ACTIVITY_TYPE <- 'all'
 
 
 setwd('/Users/panpan/PycharmProjects/old_project/fish_llr')
-file1 <- paste0('Processed_data/tracking/Tg/stat_data/', ACTIVITY_TYPE, '_', POWER, 'w_60h_batch', BATCH, '_burst4.csv')
-selected_day <- 6
+file1 <- paste0('Processed_data/tracking/Tg/stat_data/', ACTIVITY_TYPE, '_', POWER, 'w_60h_batch', 1, '_burst4.csv')
+file2 <- paste0('Processed_data/tracking/Tg/stat_data/', ACTIVITY_TYPE, '_', POWER, 'w_60h_batch', 2, '_burst4.csv')
+selected_day <- 8
 
 # intergrate every 60s
-myData <- get_df(file1, batch_num = BATCH, selected_day = selected_day)
+myData1 <- get_df(file1, batch_num = 1, selected_day = selected_day)
+myData2 <- get_df(file2, batch_num = 2, selected_day = selected_day)
+
+myData <- rbind(myData1, myData2)
 
 # remove baseline activity (0 ~ 30s)
 rm_baseline_Data <-  myData %>%
@@ -73,9 +77,13 @@ library(envalysis)
 ggplot(data = Group_Data, aes(x=inte_end, y=mean_activity_sum,
                               group = radiation_label, color = radiation_label)) +
   geom_line()+
+  geom_point()+
+  geom_ribbon(aes(ymin=mean_activity_sum-sd_activity_sum,
+                ymax=mean_activity_sum+sd_activity_sum,
+                fill=radiation_label), alpha=0.1) +
   # geom_pointrange(aes(ymin=Q1, ymax=Q3), alpha=0.5) +
-  geom_pointrange(aes(ymin=mean_activity_sum-sd_activity_sum,
-                      ymax=mean_activity_sum+sd_activity_sum)) +
+  # geom_pointrange(aes(ymin=mean_activity_sum-sd_activity_sum,
+  #                     ymax=mean_activity_sum+sd_activity_sum)) +
   ylab('Acitivty Duration (s)') + xlab('Tracking Time (min)') +
   scale_color_discrete(name='', labels = c('Control', '1.2W'), breaks = c(0, 1)) +
   theme(legend.position = 'right') +
@@ -85,14 +93,16 @@ ggplot(data = Group_Data, aes(x=inte_end, y=mean_activity_sum,
   geom_vline(xintercept = c(30, 60, 90, 120), linetype = 'dotted') +
   theme_publish()
 ggsave(paste0('Figures/Stats/Tracking/Tg/', POWER,
-              'W_day', selected_day, '_batch_', BATCH, 'mean.png'),
+              'W_day', selected_day, '_batches_', 'mean.png'),
        width=8, height=6, units='in', dpi=300)
 
 # median and IQR activity
 ggplot(data = Group_Data, aes(x=inte_end, y=median_activity_sum,
                               group = radiation_label, color = radiation_label)) +
   geom_line()+
-  geom_pointrange(aes(ymin=Q1, ymax=Q3), alpha=0.5) +
+  geom_point()+
+  geom_ribbon(aes(ymin=Q1, ymax=Q3, fill=radiation_label), alpha=0.1) +
+  # geom_pointrange(aes(ymin=Q1, ymax=Q3), alpha=0.5) +
   ylab('Activity Duration (s)') + xlab('Tracking Time (min)') +
   scale_color_discrete(name='', labels = c('Control', '1.2W'), breaks = c(0, 1)) +
   theme(legend.position = 'right') +
@@ -102,5 +112,5 @@ ggplot(data = Group_Data, aes(x=inte_end, y=median_activity_sum,
   geom_vline(xintercept = c(30, 60, 90, 120), linetype = 'dotted') +
   theme_publish()
 ggsave(paste0('Figures/Stats/Tracking/Tg/', POWER,
-              'W_day', selected_day, '_batch_', BATCH, 'median.png'),
+              'W_day', selected_day, '_batches_', 'median.png'),
        width=8, height=6, units='in', dpi=300)

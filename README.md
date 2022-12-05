@@ -28,16 +28,21 @@ ML
 1. generate label with ml_generate_label.py and save in Data/Quantization/Tg/{}W-batch{}/labels
 2. extract bout rest/active features with ml_Quan_Data_preprocessing.py
 3. do classification with ml_classification.py
+4. Visualize classification results with ml_acc_visualize_transgenic.py
 
 Statistics for burst duration
 1. generate label with ml_generate_label.py and save in Data/Quantization/Tg/{}W-batch{}/{}.npy
 2. get burst duration from data and check if fish do not move all the time,  by stats_data_cleaning_burst.py
-3. visualize burst duration with stats_visualize_burst.R, result in Figures/Stats/Quantization/Tg, 
+3. visualize burst duration with stats_visualize_burst.R, result in Figures/Stats/Quantization/Tg/all/scale/batch{}, 
+  all means all activity (burst + mid), burst mean only burst, raw is raw, scale is min_max scaling.
+4. visualize burst duration with stats_visualize_burst.R, result in Figures/Stats/Quantization/Tg/all/scale/batches, 
   all means all activity (burst + mid), burst mean only burst, raw is raw, scale is min_max scaling.
 
 Statistics for swimming distance
 1. generate label with ml_generate_label.py and save in Data/Quantization/Tg/{}W-batch{}/{}.npy
 2. get swimming distance (sum) from data and summarise data into one file, by stats_data_cleaning_distance.py, 
    results in Processed_data/tracking/Tg/stat_data named as all_1.2w_60h_batch1_burst4.csv
-3. Visualize swimming distance with stats_visualize_distance.R, result in Figures/Stats/Tracking/Tg, 
+3. Visualize swimming distance with stats_visualize_distance.R, result in Figures/Stats/Tracking/Tg/all/scale/batch{}, 
+   all means all activity (mid + large),  raw is raw, scale is min_max scaling.
+4. Visualize batches with stats_visualize_distance_batch.R, result in Figures/Stats/Tracking/Tg/all/scale/batches, 
    all means all activity (mid + large),  raw is raw, scale is min_max scaling.

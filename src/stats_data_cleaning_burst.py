@@ -10,7 +10,7 @@ Generate the burst duration from raw data for statistical analysis on light-indu
 os.chdir('/Users/panpan/PycharmProjects/old_project/fish_llr/')
 if __name__ == '__main__':
     days = [5, 6, 7, 8]
-    activity_type = ['burdur']# , 'middur'] # all activity or only one type of activity
+    activity_type = ['burdur']  # , 'middur'] # all activity or only one type of activity
     fish_type = 'Tg'
     radiation = 1.2
     plates = [1]

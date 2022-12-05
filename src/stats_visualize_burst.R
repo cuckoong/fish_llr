@@ -5,6 +5,8 @@ set.seed(345)
 library(readr)
 library(dplyr)
 library(plotrix)
+library(ggplot2)
+library(envalysis)
 
 minmax_scale <- function(x){
   return((x - min(x)) / (max(x) - min(x)))
@@ -48,6 +50,16 @@ selected_day <- 5
 # intergrate every 60s
 myData <- integrate_df(file1, batch_num = BATCH, selected_day = selected_day)
 
+
+# visualize individual fish data in 150min in line plot
+ggplot(data = myData, aes(x=inte_end, y=inte_activity_sum,
+                          group=animal_batch, color=radiation_label)) +
+  geom_point(alpha=0.3)+geom_line(alpha=0.3)
+
+# todo: ???? remove control????
+
+
+
 # remove baseline activity (0 ~ 30s)
 rm_baseline_Data <-  myData %>%
   group_by(animal_batch) %>%
@@ -68,9 +80,6 @@ Group_Data <- rm_baseline_Data %>%
             Q3 = quantile(rm_activity_sum, 0.75))
 
 # visualize individual fish activity
-library(ggplot2)
-library(envalysis)
-
 # mean and sd activity
 ggplot(data = Group_Data, aes(x=inte_end, y=mean_activity_sum,
                               group = radiation_label, color = radiation_label)) +
