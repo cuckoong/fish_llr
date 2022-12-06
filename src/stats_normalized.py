@@ -48,7 +48,7 @@ if __name__ == '__main__':
     batches = [1, 2]
     days = [5, 6, 7, 8]
     pre_duration = 30
-    post_durations = [30]
+    post_durations = [30, 60, 120]
     colors = ['orange', 'blue']
 
     for post_duration in post_durations:
@@ -107,10 +107,16 @@ if __name__ == '__main__':
 
                 # ==== step: remove light intensity effects using linear regression method =========================
                 ln_light = LinearRegression()
-                X_light = pd.get_dummies(data=df_stimulus[['location_light']], drop_first=True)
-                ln_light.fit(X_light, df_stimulus['activity_sum'])
-                df_stimulus['light_effect'] = ln_light.predict(X_light)
-                df_stimulus['activity_sum'] = df_stimulus['activity_sum'] - df_stimulus['light_effect']
+
+                # ONLY SELECT THE ON TIME PERIOD
+                X_light_ON = df_stimulus[df_stimulus['location_light'] != -1]['location'].copy()
+                X_light = pd.get_dummies(data=X_light_ON, drop_first=True)
+                y_light_ON = df_stimulus[df_stimulus['location_light'] != -1]['activity_sum'].copy()
+
+                ln_light.fit(X_light, y_light_ON)
+                X_all = pd.get_dummies(data=df_stimulus['location'].copy(), drop_first=True)
+                df_stimulus['light_effect'] = ln_light.predict(X_all)
+                df_stimulus['activity_sum'] = df_stimulus['activity_sum'].copy() - df_stimulus['light_effect']
                 # ===================================================================================================
 
                 # ==== step: remove batch effects using linear regression method =====================================
@@ -119,7 +125,7 @@ if __name__ == '__main__':
                 X_batch = pd.get_dummies(data=df_stimulus[['batch']], drop_first=True)
                 ln_batch.fit(X_batch, df_stimulus['activity_sum'])
                 df_stimulus['batch_effect'] = ln_batch.predict(X_batch)
-                df_stimulus['activity_sum'] = df_stimulus['activity_sum'] - df_stimulus['batch_effect']
+                df_stimulus['activity_sum'] = df_stimulus['activity_sum'].copy() - df_stimulus['batch_effect']
                 # ===================================================================================================
 
                 # ==== step: remove baseline activity ==============================================================
@@ -129,7 +135,7 @@ if __name__ == '__main__':
 
                 # merge baseline activity to df
                 df_stimulus = pd.merge(df_stimulus, df_baseline, on='animal_id', how='left', suffixes=('', '_baseline'))
-                df_stimulus['activity_sum'] = df_stimulus['activity_sum'] - df_stimulus['activity_sum_baseline']
+                df_stimulus['activity_sum'] = df_stimulus['activity_sum'].copy() - df_stimulus['activity_sum_baseline']
                 # ===================================================================================================
 
                 # ======== Hotelling’s T-squared test for before and after stimulus =================================
@@ -147,9 +153,18 @@ if __name__ == '__main__':
                 ax.axvline(x=stimulus_time, color='black', linestyle='--', linewidth=1)
                 ax.text(stimulus_time, 0, 'stimulus', rotation=90, fontsize=10, alpha=0.5)
 
-                # add p-value to before and after stimulus
-                ax.text(stimulus_time - pre_duration * 0.8, -0.02, 'p-value: {:.2f}'.format(before_res['p_value']), fontsize=10)
-                ax.text(stimulus_time + pre_duration * 0.2, -0.02, 'p-value: {:.2f}'.format(after_res['p_value']), fontsize=10)
+                # add p-value to before and after stimulus, center
+                ax.text(stimulus_time - pre_duration / 2 - 5, 0.15, 'p= {:.3f}'.format(before_res['p_value']),
+                        fontsize=10, horizontalalignment='center')
+                ax.text(stimulus_time + post_duration / 2 - 5, 0.15, 'p= {:.3f}'.format(after_res['p_value']),
+                        fontsize=10, horizontalalignment='center')
+
+                # add ON/OFF indication in plot, text in bold
+                on_off_list = ['OFF', 'ON']
+                ax.text(stimulus_time - pre_duration / 2 - 5, 0.18, on_off_list[i % 2],
+                        fontsize=14, fontweight='bold', horizontalalignment='center')
+                ax.text(stimulus_time + post_duration / 2 - 5, 0.18, on_off_list[(i + 1) % 2],
+                        fontsize=14, fontweight='bold', horizontalalignment='center')
 
                 # legend without frame
                 ax.legend(title='')
@@ -159,7 +174,7 @@ if __name__ == '__main__':
                 ax.set_xlabel('Time (s)')
 
                 # y axis limit
-                ax.set_ylim(-0.05, 0.25)
+                ax.set_ylim(-0.05, 0.26)
 
                 # ===================================================================================================
 
@@ -168,7 +183,7 @@ if __name__ == '__main__':
 
             plt.tight_layout()
             plt.savefig('Figures/Stats/Quantization/Tg/burst/acute_response/'
-                        '{}_{}w_60h_batch{}_day{}_post_duration{}_burst4.png'.format(ACTIVITY_TYPE, POWER,
-                                                                                batch, day, post_duration), dpi=300)
+                        '{}_{}w_60h_day{}_post_duration{}_burst4.png'.format(ACTIVITY_TYPE, POWER, day, post_duration),
+                        dpi=300)
 
             # =============================================================================
