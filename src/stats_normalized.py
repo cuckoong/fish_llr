@@ -1,5 +1,4 @@
 import os
-import sys
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -48,10 +47,11 @@ if __name__ == '__main__':
     POWER = 1.2
     batches = [1, 2]
     days = [5, 6, 7, 8]
-    durations = [30]
+    pre_duration = 30
+    post_durations = [30]
     colors = ['orange', 'blue']
 
-    for duration in durations:
+    for post_duration in post_durations:
         for day in days:
             df_batches = []
             for batch in batches:
@@ -77,41 +77,48 @@ if __name__ == '__main__':
             # select columns
             df_batches = df_batches[['batch', 'plate', 'location', 'end', 'activity_sum', 'label', 'animal_id']]
 
-            df_batches['label'] = df_batches['label'].apply(lambda x: 'Control' if x == 0 else '2W/Kg SAR')
-            df_batches['label'] = df_batches['label'].astype('category')
-
-            # categorize label column ['batch', 'plate', 'location', 'label']
-            for col in ['batch', 'plate', 'location', 'animal_id']:
-                df_batches[col] = df_batches[col].astype('category')
-                df_batches[col] = df_batches[col].cat.codes
-
             # =============================================================================
             # mean baseline activity for each animal
             # acute response -durations - durations post stimulus (at 1800s, 5400s),
             stimuli_time = [1800, 3600, 5400, 7200]
 
-            # step one: plot the activity_sum along to end, label as color, shown legend, group by label
+            # plot the activity_sum along to end, label as color, shown legend, group by label
             # subplot
             fig, axes = plt.subplots(2, 2, figsize=(10, 10))
             for i, ax in enumerate(axes.flatten()):
                 stimulus_time = stimuli_time[i]
 
                 # select data for each stimulus from time - duration to time + duration
-                df_stimulus = df_batches[(df_batches['end'] >= stimulus_time - duration) &
-                                         (df_batches['end'] <= stimulus_time + duration)].copy()
+                df_stimulus = df_batches[(df_batches['end'] >= stimulus_time - pre_duration) &
+                                         (df_batches['end'] <= stimulus_time + post_duration)].copy()
+
+                # set dim to -1 for each location
+                df_stimulus['location_light'] = df_stimulus['location'].copy()
+                df_stimulus.loc[df_stimulus['end'] <= stimulus_time, 'location_light'] = -1
+
+                # categorical columns
+                df_stimulus['label'] = df_stimulus['label'].apply(lambda x: 'Control' if x == 0 else '2W/Kg SAR')
+                df_stimulus['label'] = df_stimulus['label'].astype('category')
+
+                # categorize label column ['batch', 'plate', 'location', 'label']
+                for col in ['batch', 'plate', 'location_light', 'animal_id']:
+                    df_stimulus[col] = df_stimulus[col].astype('category')
+                    # df_stimulus[col] = df_stimulus[col].cat.codes
 
                 # ==== step: remove light intensity effects using linear regression method =========================
                 ln_light = LinearRegression()
-                ln_light.fit(df_stimulus[['location']], df_stimulus['activity_sum'])
-                df_stimulus['light_effect'] = ln_light.predict(df_stimulus[['location']])
+                X_light = pd.get_dummies(data=df_stimulus[['location_light']], drop_first=True)
+                ln_light.fit(X_light, df_stimulus['activity_sum'])
+                df_stimulus['light_effect'] = ln_light.predict(X_light)
                 df_stimulus['activity_sum'] = df_stimulus['activity_sum'] - df_stimulus['light_effect']
                 # ===================================================================================================
 
                 # ==== step: remove batch effects using linear regression method =====================================
                 # linear regression between activity_sum_scaled and batch
                 ln_batch = LinearRegression()
-                ln_batch.fit(df_stimulus[['batch']], df_stimulus['activity_sum'])
-                df_stimulus['batch_effect'] = ln_batch.predict(df_stimulus[['batch']])
+                X_batch = pd.get_dummies(data=df_stimulus[['batch']], drop_first=True)
+                ln_batch.fit(X_batch, df_stimulus['activity_sum'])
+                df_stimulus['batch_effect'] = ln_batch.predict(X_batch)
                 df_stimulus['activity_sum'] = df_stimulus['activity_sum'] - df_stimulus['batch_effect']
                 # ===================================================================================================
 
@@ -141,8 +148,8 @@ if __name__ == '__main__':
                 ax.text(stimulus_time, 0, 'stimulus', rotation=90, fontsize=10, alpha=0.5)
 
                 # add p-value to before and after stimulus
-                ax.text(stimulus_time - duration, -0.02, 'p-value: {:.2f}'.format(before_res['p_value']), fontsize=10)
-                ax.text(stimulus_time + duration, -0.02, 'p-value: {:.2f}'.format(after_res['p_value']), fontsize=10)
+                ax.text(stimulus_time - pre_duration * 0.8, -0.02, 'p-value: {:.2f}'.format(before_res['p_value']), fontsize=10)
+                ax.text(stimulus_time + pre_duration * 0.2, -0.02, 'p-value: {:.2f}'.format(after_res['p_value']), fontsize=10)
 
                 # legend without frame
                 ax.legend(title='')
@@ -151,6 +158,9 @@ if __name__ == '__main__':
                 ax.set_ylabel('Normalized Burst Activity ')
                 ax.set_xlabel('Time (s)')
 
+                # y axis limit
+                ax.set_ylim(-0.05, 0.25)
+
                 # ===================================================================================================
 
             # set title for whole figure
@@ -158,7 +168,7 @@ if __name__ == '__main__':
 
             plt.tight_layout()
             plt.savefig('Figures/Stats/Quantization/Tg/burst/acute_response/'
-                        '{}_{}w_60h_batch{}_day{}_duration{}_burst4.png'.format(ACTIVITY_TYPE, POWER,
-                                                                                batch, day, duration), dpi=300)
+                        '{}_{}w_60h_batch{}_day{}_post_duration{}_burst4.png'.format(ACTIVITY_TYPE, POWER,
+                                                                                batch, day, post_duration), dpi=300)
 
             # =============================================================================
