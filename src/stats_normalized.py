@@ -48,7 +48,7 @@ if __name__ == '__main__':
     batches = [1, 2]
     days = [5, 6, 7, 8]
     pre_duration = 30
-    post_durations = [30, 60, 120]
+    post_durations = [20]
     colors = ['orange', 'blue']
 
     for post_duration in post_durations:

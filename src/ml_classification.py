@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
+from sklearn.feature_selection import SelectPercentile, VarianceThreshold
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RepeatedStratifiedKFold, permutation_test_score
@@ -15,7 +16,8 @@ os.chdir('/Users/panpan/PycharmProjects/old_project/fish_llr/')
 
 def clf(data, labels, case='SVM'):
     if case == 'NB':
-        steps = [('scaler', StandardScaler()), ('NB', GaussianNB())]
+        steps = [('variance_threshold', VarianceThreshold()), ('scaler', StandardScaler()),
+                 ('selection', SelectPercentile(percentile=20)), ('NB', GaussianNB())]
         pip = Pipeline(steps)
         # permutation test
         cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=10, random_state=1)
@@ -41,7 +43,8 @@ def grid_search(x, y, pip, param_grid):
 
 def svm_clf(x, y):
     # grid search pipeline
-    steps = [('scaler', StandardScaler()), ('SVM', SVC())]
+    steps = [('variance_threshold', VarianceThreshold()), ('scaler', StandardScaler()),
+             ('selection', SelectPercentile(percentile=20)), ('SVM', SVC())]
     pip = Pipeline(steps)
     param_grid = [{'SVM__C': np.logspace(-3, 3, 7),
                    'SVM__gamma': np.logspace(-3, 0, 4)}]
@@ -63,7 +66,8 @@ def svm_clf(x, y):
 
 def knn_clf(x, y):
     # grid search pipeline
-    steps = [('scaler', StandardScaler()), ('knn', KNeighborsClassifier())]
+    steps = [('variance_threshold', VarianceThreshold()), ('scaler', StandardScaler()),
+             ('selection', SelectPercentile(percentile=20)), ('knn', KNeighborsClassifier())]
     pip = Pipeline(steps)
     param_grid = [{'knn__n_neighbors': np.arange(1, 10)}]
     params = grid_search(x, y, pip, param_grid)
@@ -85,7 +89,7 @@ if __name__ == "__main__":
     power_levels = [1.2]  # [0, 1.2, 3]
     time_in_min = 30  # using all 30 minutes data
     days = [5, 6, 7, 8]
-    batches = [2]  # [1, 2]
+    batches = [1]  # [1, 2]
     plates = [1]  # [1, 2]
     hour = 60
 
@@ -96,8 +100,8 @@ if __name__ == "__main__":
     p_value_list = []
     time_list = []
 
-    for case_name in cases:                  # different classifiers
-        for power_level in power_levels:     # different power levels
+    for case_name in cases:  # different classifiers
+        for power_level in power_levels:  # different power levels
             for day in days:
                 # different batch and plate from
                 # the same day,
@@ -132,4 +136,5 @@ if __name__ == "__main__":
                 p_value_list.append(p_value)
 
     acc_df = pd.DataFrame(data=dict(case=case_list, power=power_list, day=day_list, acc=acc_list, pvalue=p_value_list))
-    acc_df.to_csv('Analysis_Results/ML_results/{}/Quan_Data_Classification/acc.csv'.format(fish_type), index=False)
+    acc_df.to_csv('Analysis_Results/ML_results/{}/Quan_Data_Classification/'
+                  'acc_with_feature_selection.csv'.format(fish_type), index=False)
