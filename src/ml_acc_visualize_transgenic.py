@@ -9,8 +9,9 @@ os.chdir('/Users/panpan/PycharmProjects/old_project/fish_llr')
 if __name__ == '__main__':
     mode = 'quantization'
     fish_type = 'Tg'
-    batch = 2
-    df = pd.read_csv('Analysis_Results/ML_results/Tg/Quan_Data_Classification/acc-batch{}.csv'.format(batch))
+    batch = 1
+    df = pd.read_csv('Analysis_Results/ML_results/Tg/Quan_Data_Classification/feature_selection/'
+                     'acc-batch{}.csv'.format(batch))
     # df['SAR'] = df['power'].map({0: 0, 5: 0.009, 1.2: 2, 3: 4.9})
     df['acc'] = df['acc'] * 100
     df['classifier_idx'] = df['case'].map({'NB': 2, 'SVM': 0, 'KNN': 1})
@@ -47,4 +48,4 @@ if __name__ == '__main__':
     # add legend for each classifier for whole figure
     # plt.legend(['SVM', 'KNN', 'NB'], loc='upper center', bbox_to_anchor=(0.5, 1.1))
     # plt.show()
-    plt.savefig('Figures/ML_acc/ML_transgenic_{}_1.2W_acc_batch{}.png'.format(mode, batch), dpi=300)
+    plt.savefig('Figures/ML_acc/feature_selection/ML_transgenic_{}_1.2W_acc_batch{}.png'.format(mode, batch), dpi=300)

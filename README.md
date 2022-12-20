@@ -30,6 +30,12 @@ ML
 3. do classification with ml_classification.py
 4. Visualize classification results with ml_acc_visualize_transgenic.py
 
+
+Statistics for burst duration (using normalized)
+1. generate label with ml_generate_label.py and save in Data/Quantization/Tg/{}W-batch{}/{}.npy
+2. get burst duration from data and check if fish do not move all the time, by stats_data_cleaning_burst.py
+3. normalized data (batch + well + baseline), visualize and statistical comparison (stats_normalized.py)
+
 Statistics for burst duration
 1. generate label with ml_generate_label.py and save in Data/Quantization/Tg/{}W-batch{}/{}.npy
 2. get burst duration from data and check if fish do not move all the time,  by stats_data_cleaning_burst.py

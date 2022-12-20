@@ -179,7 +179,7 @@ if __name__ == '__main__':
                 # ===================================================================================================
 
             # set title for whole figure
-            fig.suptitle('Day {} - {} - {}w - batch {}'.format(day, ACTIVITY_TYPE, POWER, batch))
+            fig.suptitle('Day {} - {} - {}w'.format(day, ACTIVITY_TYPE, POWER))
 
             plt.tight_layout()
             plt.savefig('Figures/Stats/Quantization/Tg/burst/acute_response/'
