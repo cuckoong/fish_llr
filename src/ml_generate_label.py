@@ -6,7 +6,7 @@ os.chdir('/Users/panpan/PycharmProjects/old_project/fish_llr')
 
 
 if __name__ == '__main__':
-    exp = '1.2W'
+    exp = '1W'
     days = [5, 6, 7, 8]
     batch = 2
     plate = 1
@@ -17,10 +17,13 @@ if __name__ == '__main__':
         # exp: 1
         # null: -1
 
-        label_list = [0, 1]
-        count_label_list = [48, 48]
+        label_list = [0, 1, -1]
+        count_label_list = [36, 36, 24]
 
-        # label_list = [0, 1, -1]  # first 3 rows are control; then 3 rows are exp; then 3 rows are null
+        # label_list = [0, 1]
+        # count_label_list = [48, 48]
+
+        # label_list = [0, 1, -1]  # first 3 rows are control; then 3 rows are exp; then 2 rows are null
         # count_label_list = [36, 36, 24]  # 1.2W-60H-batch3
 
         # label_list = [1, 0]

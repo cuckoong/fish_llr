@@ -6,7 +6,7 @@ os.chdir('/Users/panpan/PycharmProjects/old_project/fish_llr')
 if __name__ == '__main__':
     # Load data from csv file
     fish_type = 'Tg'  # ['WT', 'Tg']
-    radiation = 1.2
+    radiation = 1
     batch = 2
     hour = 60
     days = [5, 6, 7, 8]

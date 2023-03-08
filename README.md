@@ -25,10 +25,12 @@
 
 
 ML
-1. generate label with ml_generate_label.py and save in Data/Quantization/Tg/{}W-batch{}/labels
-2. extract bout rest/active features with ml_Quan_Data_preprocessing.py
-3. do classification with ml_classification.py
-4. Visualize classification results with ml_acc_visualize_transgenic.py
+1. generate label with ml_generate_label.py and save in Data/Quantization/Tg/{}W-batch{}/{}.npy';
+2. extract bout rest/active features (within 30min after stimulus) with ml_Quan_Data_preprocessing.py, 
+results in Processed_data/quantization/Tg/batch{}/features/{}W-60h-{}dpf-0{}-30-min.csv;
+3. do classification with ml_classification.py, result in Analysis_Results/ML_results/Tg/Quan_Data_Classification/
+feature_selection/{}W/acc-batch{}.csv;
+4. Visualize classification results with ml_acc_visualize_transgenic.py;
 
 
 Statistics for burst duration (using normalized)
@@ -39,10 +41,16 @@ Statistics for burst duration (using normalized)
 Statistics for burst duration
 1. generate label with ml_generate_label.py and save in Data/Quantization/Tg/{}W-batch{}/{}.npy
 2. get burst duration from data and check if fish do not move all the time,  by stats_data_cleaning_burst.py
-3. visualize burst duration with stats_visualize_burst.R, result in Figures/Stats/Quantization/Tg/all/scale/batch{}, 
+3. visualize and statistical comparison (stats_normalized.py), collect short-time response, normalized using batch,
+baseline activity, and light-sensitive level, and compare the differences using hotelling t2 test (stats_burst_duration.py),
+
+''' 
+Not use:
+4. visualize burst duration with stats_visualize_burst.R, result in Figures/Stats/Quantization/Tg/all/scale/batch{}, 
   all means all activity (burst + mid), burst mean only burst, raw is raw, scale is min_max scaling.
 4. visualize burst duration with stats_visualize_burst.R, result in Figures/Stats/Quantization/Tg/all/scale/batches, 
   all means all activity (burst + mid), burst mean only burst, raw is raw, scale is min_max scaling.
+'''
 
 Statistics for swimming distance
 1. generate label with ml_generate_label.py and save in Data/Quantization/Tg/{}W-batch{}/{}.npy

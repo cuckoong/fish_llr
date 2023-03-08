@@ -86,10 +86,10 @@ def knn_clf(x, y):
 if __name__ == "__main__":
     cases = ['NB', 'SVM', 'KNN']
     fish_type = 'Tg'
-    power_levels = [1.2]  # [0, 1.2, 3]
+    power_level = 1
     time_in_min = 30  # using all 30 minutes data
     days = [5, 6, 7, 8]
-    batches = [1]  # [1, 2]
+    batches = [2]  # [1, 2]
     plates = [1]  # [1, 2]
     hour = 60
 
@@ -100,32 +100,27 @@ if __name__ == "__main__":
     p_value_list = []
     time_list = []
 
-    for case_name in cases:  # different classifiers
-        for power_level in power_levels:  # different power levels
-            for day in days:
-                # different batch and plate from
-                # the same day,
-                # the same level of radiation
-                # are grouped together for classification.
-                feature_list = []
-                label_list = []
-                for batch_idx in batches:
-                    data_dir = 'Processed_data/quantization/{}/batch{}/features'.format(fish_type, batch_idx)
-                    for plate in plates:
-                        df = pd.read_csv(os.path.join(data_dir,
-                                                      '{}W-60h-{}dpf-0{}-{}-min.csv'.format(power_level, day,
-                                                                                            plate, time_in_min)))
-                        # get labels
-                        label = df['label']
-                        label_list.append(label)
+    for batch_idx in batches:
+        for day in days:
+            data_dir = 'Processed_data/quantization/{}/batch{}/features'.format(fish_type, batch_idx)
 
-                        # get features
-                        features = df.drop(['label'], axis=1)
-                        feature_list.append(features)
+            feature_list = []
+            label_list = []
+            for plate in plates:
+                df = pd.read_csv(os.path.join(data_dir, '{}W-60h-{}dpf-0{}-{}-min.csv'.format(power_level, day,
+                                                                                              plate, time_in_min)))
+                # get labels
+                label = df['label']
+                label_list.append(label)
 
-                feature = np.concatenate(feature_list, axis=0)
-                label = np.concatenate(label_list, axis=0)
+                # get features
+                features = df.drop(['label'], axis=1)
+                feature_list.append(features)
 
+            feature = np.concatenate(feature_list, axis=0)
+            label = np.concatenate(label_list, axis=0)
+
+            for case_name in cases:
                 acc, p_value = clf(feature, label, case=case_name)
 
                 # gathering results
@@ -135,6 +130,7 @@ if __name__ == "__main__":
                 acc_list.append(acc)
                 p_value_list.append(p_value)
 
-    acc_df = pd.DataFrame(data=dict(case=case_list, power=power_list, day=day_list, acc=acc_list, pvalue=p_value_list))
-    acc_df.to_csv('Analysis_Results/ML_results/{}/Quan_Data_Classification/'
-                  'acc_with_feature_selection.csv'.format(fish_type), index=False)
+        acc_df = pd.DataFrame(data=dict(case=case_list, power=power_list, day=day_list, acc=acc_list,
+                                        pvalue=p_value_list))
+        acc_df.to_csv('Analysis_Results/ML_results/{}/Quan_Data_Classification/feature_selection/{}W/'
+                      'acc-batch{}.csv'.format(fish_type, power_level, batch_idx ), index=False)

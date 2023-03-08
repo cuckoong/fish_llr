@@ -12,7 +12,7 @@ if __name__ == '__main__':
     days = [5, 6, 7, 8]
     activity_type = ['burdur']  # , 'middur'] # all activity or only one type of activity
     fish_type = 'Tg'
-    radiation = 1.2
+    radiation = 1
     plates = [1]
     hour = 60
     burst_threshold = 4

@@ -14,14 +14,11 @@ sns.set_palette('Set2')
 os.chdir('/Users/panpan/PycharmProjects/old_project/fish_llr')
 
 
-def hotelling_t2(df, stim_time, is_before):
+def hotelling_t2(df, stim_time, is_before, compare_group):
     if is_before:
         df_slicing = df[df['end'] < stim_time].copy()
     else:
         df_slicing = df[df['end'] > stim_time].copy()
-
-    # comparison between control and sar
-    compare_group = ['Control', '2W/Kg SAR']
 
     control = narrow_2_wide(df_slicing, compare_group[0])
     radiation = narrow_2_wide(df_slicing, compare_group[1])
@@ -44,12 +41,17 @@ def narrow_2_wide(df, compare_group_name):
 if __name__ == '__main__':
 
     ACTIVITY_TYPE = 'burdur'
-    POWER = 1.2
+    POWER = 1
     batches = [1, 2]
-    days = [5, 6, 7, 8]
+    days = [8]
     pre_duration = 30
     post_durations = [20]
     colors = ['orange', 'blue']
+
+    if POWER == 1:
+        compare_group = ['control', '1.6W/Kg SAR']
+    elif POWER == 1.2:
+        compare_group = ['Control', '2W/Kg SAR']
 
     for post_duration in post_durations:
         for day in days:
@@ -97,7 +99,7 @@ if __name__ == '__main__':
                 df_stimulus.loc[df_stimulus['end'] <= stimulus_time, 'location_light'] = -1
 
                 # categorical columns
-                df_stimulus['label'] = df_stimulus['label'].apply(lambda x: 'Control' if x == 0 else '2W/Kg SAR')
+                df_stimulus['label'] = df_stimulus['label'].apply(lambda x: compare_group[0] if x == 0 else compare_group[1])
                 df_stimulus['label'] = df_stimulus['label'].astype('category')
 
                 # categorize label column ['batch', 'plate', 'location', 'label']
@@ -140,10 +142,11 @@ if __name__ == '__main__':
 
                 # ======== Hotelling’s T-squared test for before and after stimulus =================================
                 # before stimulus
-                before_res = hotelling_t2(df_stimulus, stimulus_time, is_before=True)
+                # comparison between control and sar
+                before_res = hotelling_t2(df_stimulus, stimulus_time, is_before=True, compare_group=compare_group)
 
                 # after stimulus
-                after_res = hotelling_t2(df_stimulus, stimulus_time, is_before=False)
+                after_res = hotelling_t2(df_stimulus, stimulus_time, is_before=False, compare_group=compare_group)
                 # ===================================================================================================
 
                 # =============== visualize the activity_sum_scaled ==================================================
