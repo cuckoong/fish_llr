@@ -41,11 +41,11 @@ def narrow_2_wide(df, compare_group_name):
 if __name__ == '__main__':
 
     ACTIVITY_TYPE = 'burdur'
-    POWER = 1
+    POWER = 1.2
     batches = [1, 2]
-    days = [8]
+    days = [5, 6, 7, 8]
     pre_duration = 30
-    post_durations = [20]
+    post_durations = [1800]
     colors = ['orange', 'blue']
 
     if POWER == 1:
