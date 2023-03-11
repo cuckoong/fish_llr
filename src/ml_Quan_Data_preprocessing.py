@@ -6,7 +6,7 @@ os.chdir('/Users/panpan/PycharmProjects/old_project/fish_llr')
 if __name__ == '__main__':
     # Load data from csv file
     fish_type = 'Tg'  # ['WT', 'Tg']
-    radiation = 1
+    radiation = 1.2
     batch = 2
     hour = 60
     days = [5, 6, 7, 8]
@@ -25,7 +25,7 @@ if __name__ == '__main__':
             data_cp['time'] = data_cp['end'] // 60
             data_metric = data_cp[metric_list]
             # group each 60 seconds into one row
-            data_sum = data_metric.groupby(['aname', 'time']).sum().reset_index()
+            data_sum = data_metric.groupby(['aname', 'time']).mean().reset_index()
             data_sum.to_csv(os.path.join(result_dir, 'raw_features', filename + '-data.csv'), index=False)
             # labels
             labels = np.load(os.path.join(data_dir, filename + '-label.npy'))
@@ -41,5 +41,5 @@ if __name__ == '__main__':
             for period in periods:  # time (minutes) after on/off stimulus
                 features_df = get_features(data, period=period, mode='quantization')
                 features_df['label'] = labels[labels >= 0]
-                features_df.to_csv(os.path.join(result_dir, 'features',
-                                                filename + '-{}-min.csv'.format(period)), index=False)
+                features_df.to_csv(os.path.join(result_dir, 'features', filename + '-{}-min.csv'.format(period)),
+                                   index=False)
