@@ -67,8 +67,8 @@ def bout(grouped_L, df, mode='rest'):
         first_bout = np.where((grouped_L[:, 0] == mode_idx) & (grouped_L[:, 1] >= 1))[0][0]  # first bout
         bout_latency = np.sum(grouped_L[:first_bout, 1])
     except IndexError:
-        print('no rest/active bout here, return length as whole length')
-        bout_latency = df.shape[0]
+        print('no rest/active bout here, return np.nan')
+        bout_latency = np.nan
 
     if len(bout_list) > 0:
         average_bout_length = np.mean(bout_list)
@@ -81,7 +81,7 @@ def bout(grouped_L, df, mode='rest'):
 # Number of Rest Bout & Active Bout
 def num_rest_active_bout(df):
     all_active_data = df[:, :, -1]
-    waking_filter = all_active_data > 0.1
+    waking_filter = all_active_data > 0.1  # 10% time is active
     waking_data = all_active_data * waking_filter
     # rest filter
     rest_filter = all_active_data <= 0.1
