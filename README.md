@@ -40,9 +40,11 @@ Statistics for burst duration (using normalized)
 
 Statistics for burst duration
 1. generate label with ml_generate_label.py and save in Data/Quantization/Tg/{}W-batch{}/{}.npy
-2. get burst duration from data and check if fish do not move all the time,  by stats_data_cleaning_burst.py
-3. visualize and statistical comparison (stats_normalized.py), collect short-time response, normalized using batch,
-baseline activity, and light-sensitive level, and compare the differences using hotelling t2 test (stats_burst_duration.py),
+2. get burst duration from data and check if fish do not move all the time, by stats_data_cleaning_burst.py
+3. visualize and statistical comparison for acute response(stats_normalized_by_second.py), collect short-time response,
+normalized using batch, baseline activity, and light-sensitive level, and compare the differences using hotelling t2 test (stats_burst_duration.py), 
+4. visualize and statistical comparison for 30 minutes activity (stats_normalized_by_min.py), collect response, 
+normalized using batch, baseline activity, and light-sensitive level, and compare the differences using hotelling t2 test (stats_burst_duration.py),
 
 ''' 
 Not use:
