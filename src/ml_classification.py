@@ -1,61 +1,78 @@
 import numpy as np
 from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer, MissingIndicator
+from sklearn.inspection import permutation_importance
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.feature_selection import SelectPercentile, VarianceThreshold, chi2, f_classif
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import GridSearchCV, StratifiedKFold
+from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
 from sklearn.model_selection import RepeatedStratifiedKFold, permutation_test_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 import os
 
 os.chdir('/Users/panpan/PycharmProjects/old_project/fish_llr/')
 
 
-def clf(data, labels, case='SVM', cat_features=[], num_features=[]):
-    numeric_transformer = Pipeline(
-        steps=[
-            ('variance_threshold', VarianceThreshold()),
-            ('scaler', StandardScaler()),
-            ('selection', SelectPercentile(percentile=20))
-        ]
-    )
+def clf(data, labels, case='SVM', cat_features=[], numeric_features=[]):
+    if cat_features == [] and numeric_features == []:
+        numeric_features = data.columns
 
-    categorical_transformer = Pipeline(
-        steps=[
-            ('onehot', OneHotEncoder(handle_unknown='ignore')),
-            ('selection', SelectPercentile(chi2, percentile=20))
-        ]
-    )
-
-    preprocessor = ColumnTransformer(
+    # =============== missing value imputation ===============
+    missing_transformer = ColumnTransformer(
         transformers=[
-            ('num', numeric_transformer, num_features),
-            ('cat', categorical_transformer, cat_features)
+            ('simple_imputer', SimpleImputer(strategy='median'), numeric_features),
+            ('indicator', MissingIndicator(), numeric_features)
         ]
     )
+
+    data_clean = missing_transformer.fit_transform(data)
+    # add indicator columns for those column that have missing values
+    column_names = missing_transformer.get_feature_names_out(input_features=numeric_features)
+    data_clean = pd.DataFrame(data_clean, columns=column_names)
+
+    # =============== models ===============
+
+    pre_steps = [
+        ('variance_threshold', VarianceThreshold()),
+        ('scaler', StandardScaler()),
+        ('selection', SelectPercentile(percentile=20))
+    ]
 
     if case == 'NB':
-        steps = [('preprocessor', preprocessor),
-                 ('NB', GaussianNB())]
+        steps = pre_steps + [('NB', GaussianNB())]
         pip = Pipeline(steps)
-        # permutation test
-        # cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=10, random_state=1)
-        cv = StratifiedKFold(5, shuffle=True, random_state=0)
-        accuracy, _, p = permutation_test_score(pip, data, labels, cv=cv, n_permutations=2000, n_jobs=-1,
-                                                random_state=1, verbose=0, scoring='accuracy')
-        return accuracy, p
 
     if case == 'SVM':
-        accuracy, p = svm_clf(data, labels, preprocessor)
-        return accuracy, p
+        pip = svm_clf(data_clean, labels, pre_steps)
 
     elif case == 'KNN':
-        accuracy, p = knn_clf(data, labels, preprocessor)
-        return accuracy, p
+        pip = knn_clf(data_clean, labels, pre_steps)
+
+    #  ===============  feature importance ===============
+    # x_train, x_test, y_train, y_test = train_test_split(data_clean, labels, test_size=0.2, random_state=42)
+    # pip.fit(x_train, y_train)
+    #
+    # result = permutation_importance(pip, data_clean, labels, n_repeats=10, random_state=42)
+    # feature_importances = pd.DataFrame({'feature': x_test.columns, 'importance': result.importances_mean})
+    # feature_importances = feature_importances.sort_values('importance', ascending=True, ignore_index=True)
+    #
+    # # visualize sorted feature importance
+    # plt.barh(feature_importances['feature'], feature_importances['importance'])
+    # plt.show()
+    #
+    # sns.displot(data=x_test, x='simple_imputer__total_active_2', hue=labels, shrink=.8, height=5, aspect=2)
+
+    #  =============== permutation test ===============
+    cv = StratifiedKFold(5, shuffle=True, random_state=0)
+    accuracy, _, p = permutation_test_score(pip, data_clean, labels, cv=cv, n_permutations=2000, n_jobs=-1,
+                                            random_state=1, verbose=0, scoring='accuracy')
+    return accuracy, p
 
 
 def grid_search(x, y, pip, param_grid):
@@ -65,47 +82,34 @@ def grid_search(x, y, pip, param_grid):
     return params
 
 
-def svm_clf(x, y, preprocessor):
+def svm_clf(x, y, pre_steps):
     # grid search pipeline
-    steps = [('preprocessor', preprocessor),
-             ('SVM', SVC())]
+    steps = pre_steps + [('SVM', SVC())]
     pip = Pipeline(steps)
 
     param_grid = [{'SVM__C': np.logspace(-3, 3, 7),
                    'SVM__gamma': np.logspace(-3, 0, 4)}]
 
-    params = grid_search(x, y, pip, param_grid)
+    grid_search = GridSearchCV(pip, param_grid=param_grid, cv=5, n_jobs=-1, verbose=1)
+    grid_search.fit(x, y)
 
     # best model
-    best_C = params['SVM__C']
-    best_gamma = params['SVM__gamma']
-    # best model
-    model = SVC(C=best_C, gamma=best_gamma)
+    best_model = grid_search.best_estimator_
 
-    # permutation test
-    cv = StratifiedKFold(5, shuffle=True, random_state=0)
-    accuracy, _, p = permutation_test_score(model, x, y, cv=cv, n_permutations=2000, n_jobs=-1,
-                                            random_state=1, verbose=0, scoring='accuracy')
-    return accuracy, p
+    return best_model
 
 
-def knn_clf(x, y):
+def knn_clf(x, y, pre_steps):
     # grid search pipeline
-    steps = [('variance_threshold', VarianceThreshold()), ('scaler', StandardScaler()),
-             ('selection', SelectPercentile(percentile=20)), ('knn', KNeighborsClassifier())]
+    steps = pre_steps + [('knn', KNeighborsClassifier())]
     pip = Pipeline(steps)
     param_grid = [{'knn__n_neighbors': np.arange(1, 10)}]
-    params = grid_search(x, y, pip, param_grid)
+    grid_search = GridSearchCV(pip, param_grid=param_grid, cv=5, n_jobs=-1, verbose=1)
+    grid_search.fit(x, y)
 
     # best model
-    n_neighbors = params['knn__n_neighbors']
-    model = KNeighborsClassifier(n_neighbors=n_neighbors)
-
-    # permutation test
-    cv = StratifiedKFold(5, shuffle=True, random_state=0)
-    accuracy, _, p = permutation_test_score(model, x, y, cv=cv, n_permutations=2000, n_jobs=-1,
-                                            random_state=1, verbose=0, scoring='accuracy')
-    return accuracy, p
+    best_model = grid_search.best_estimator_
+    return best_model
 
 
 if __name__ == "__main__":
@@ -115,55 +119,39 @@ if __name__ == "__main__":
     time_in_min = 30  # using all 30 minutes data
     days = [5, 6, 7, 8]
     batches = [1, 2]  # [1, 2]
-    plates = [1]  # [1, 2]
+    plate = 1  # [1, 2]
     hour = 60
 
-    batch_list = []
+    case_list = []
     power_list = []
     day_list = []
-    feature_list = []
-    label_list = []
+    acc_list = []
+    pvalue_list = []
+    batch_list = []
 
     for power_level in power_levels:
-        for batch_idx in batches:
-            for day in days:
+        for day in days:
+            for batch_idx in batches:
                 data_dir = 'Processed_data/quantization/{}/batch{}/features'.format(fish_type, batch_idx)
+                df = pd.read_csv(os.path.join(data_dir, '{}W-60h-{}dpf-0{}-{}-min.csv'.format(power_level, day,
+                                                                                              plate, time_in_min)))
+                # get labels
+                label = df['label']
 
-                for plate in plates:
-                    df = pd.read_csv(os.path.join(data_dir, '{}W-60h-{}dpf-0{}-{}-min.csv'.format(power_level, day,
-                                                                                                  plate, time_in_min)))
-                    # get labels
-                    label = df['label']
-                    label_list.append(label)
+                # get features
+                features = df.drop(['label'], axis=1)
 
-                    # get features
-                    features = df.drop(['label'], axis=1)
-                    feature_list.append(features)
+                for case_name in cases:
+                    acc, p_value = clf(features, label, case=case_name)
+                    print('case_name: {} Accuracy: {:.3f}%, p-value: {:.3f}'.format(case_name, acc * 100, p_value))
 
-                    # get other info
-                    power_list.extend([power_level] * len(label))
-                    batch_list.extend([batch_idx] * len(label))
-                    day_list.extend([day] * len(label))
+                    case_list.append(case_name)
+                    power_list.append(power_level)
+                    batch_list.append(batch_idx)
+                    day_list.append(day)
+                    acc_list.append(acc)
+                    pvalue_list.append(p_value)
 
-    feature = pd.concat(feature_list, axis=0)
-    label = np.concatenate(label_list, axis=0)
-    power_level = np.array(power_list)
-    batch_idx = np.array(batch_list)
-    day = np.array(day_list)
-
-    df = pd.DataFrame(data=dict(power=power_level, batch=batch_idx, day=day)).reset_index(drop=True)
-
-    # convert to pandas dummy variables
-    feature.reset_index(drop=True, inplace=True)
-
-    # concat features and df
-    input = pd.concat([feature, df], axis=1)
-
-    # category and numerical features
-    cat_features = ['power', 'batch', 'day']
-    num_features = [col for col in input.columns if col not in cat_features]
-
-    for case_name in cases:
-        acc, p_value = clf(input, label, case=case_name,
-                           cat_features=cat_features, num_features=num_features)
-        print('case_name: {} Accuracy: {:.3f}%, p-value: {:.3f}'.format(case_name, acc * 100, p_value))
+    res_df = pd.DataFrame({'case': case_list, 'power': power_list, 'day': day_list, 'acc': acc_list,
+                           'p-value': pvalue_list, 'batch': batch_list})
+    res_df.to_csv('Analysis_Results/ML_results/Tg/Quan_Data_Classification/feature_selection/all.csv', index=False)
