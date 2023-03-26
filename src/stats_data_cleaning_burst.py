@@ -11,17 +11,17 @@ os.chdir('/Users/panpan/PycharmProjects/old_project/fish_llr/')
 if __name__ == '__main__':
     days = [5, 6, 7, 8]
     activity_type = ['burdur']  # , 'middur'] # all activity or only one type of activity
-    fish_type = 'Tg'
-    radiation = 1
+    fish_type = 'WT'
+    radiation = 3
     plates = [1]
     hour = 60
     burst_threshold = 4
     batch = 2
 
-    feature_dir = 'Data/Quantization/Tg/{}W-batch{}/'.format(radiation, batch)
-    label_dir = 'Data/Quantization/Tg/{}W-batch{}/'.format(radiation, batch)
+    feature_dir = 'Data/Quantization/{}/{}W-batch{}/'.format(fish_type, radiation, batch)
+    label_dir = 'Data/Quantization/{}/{}W-batch{}/'.format(fish_type, radiation, batch)
 
-    res_dir = 'Processed_data/quantization/Tg/stat_data/'
+    res_dir = f'Processed_data/quantization/{fish_type}/stat_data/'
 
     df_list = []
 
@@ -55,6 +55,13 @@ if __name__ == '__main__':
             features.loc[features['label'] == 0, 'radiation'] = 0
 
             # group by animal, sum of duration, check if animal freezing all the time
+            print((features.groupby('aname')['activity_sum'].sum() == 0).sum())
+
+            # keep only the animals that are not freezing all the time
+            features = features[features.groupby('aname')['activity_sum'].transform('sum') > 0]
+
+            # group by animal, sum of duration, check if animal freezing all the time
+            print('after remove')
             print((features.groupby('aname')['activity_sum'].sum() == 0).sum())
 
             # result dir

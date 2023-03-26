@@ -3,7 +3,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer, MissingIndicator
 from sklearn.inspection import permutation_importance
 from sklearn.svm import SVC
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import SelectPercentile, VarianceThreshold, chi2, f_classif
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
@@ -11,8 +11,6 @@ from sklearn.model_selection import RepeatedStratifiedKFold, permutation_test_sc
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 import os
 
@@ -114,13 +112,13 @@ def knn_clf(x, y, pre_steps):
 
 if __name__ == "__main__":
     cases = ['NB', 'SVM', 'KNN']
-    fish_type = 'Tg'
-    power_levels = [1, 1.2]
+    fish_type = 'WT'
+    power_levels = [0, 1.2, 3, 5]
     time_in_min = 30  # using all 30 minutes data
     days = [5, 6, 7, 8]
-    batches = [1, 2]  # [1, 2]
     plate = 1  # [1, 2]
     hour = 60
+    batches = [1, 2]
 
     case_list = []
     power_list = []
@@ -131,27 +129,39 @@ if __name__ == "__main__":
 
     for power_level in power_levels:
         for day in days:
-            for batch_idx in batches:
-                data_dir = 'Processed_data/quantization/{}/batch{}/features'.format(fish_type, batch_idx)
-                df = pd.read_csv(os.path.join(data_dir, '{}W-60h-{}dpf-0{}-{}-min.csv'.format(power_level, day,
-                                                                                              plate, time_in_min)))
-                # get labels
-                label = df['label']
+            data_path = f'Processed_data/quantization/{fish_type}/ML_features/{power_level}W_day{day}_data.csv'
+            df = pd.read_csv(data_path)
+            # data_dir = 'Processed_data/quantization/{}/batch{}/features'.format(fish_type, batch_idx)
+            # df = pd.read_csv(os.path.join(data_dir, '{}W-60h-{}dpf-0{}-{}-min.csv'.format(power_level, day,
+            #                                                                               plate, time_in_min)))
 
-                # get features
-                features = df.drop(['label'], axis=1)
+            # check batch number
+            if len(batches) == 1:
+                batch_idx = batches[0]
+                df = df[df['batch'] == batch_idx].copy()
+                df.drop(['batch'], axis=1, inplace=True)
+            else:
+                batch_idx = 'all'
+                df.drop(['batch'], axis=1, inplace=True)
 
-                for case_name in cases:
-                    acc, p_value = clf(features, label, case=case_name)
-                    print('case_name: {} Accuracy: {:.3f}%, p-value: {:.3f}'.format(case_name, acc * 100, p_value))
+            # get labels
+            label = df['label']
 
-                    case_list.append(case_name)
-                    power_list.append(power_level)
-                    batch_list.append(batch_idx)
-                    day_list.append(day)
-                    acc_list.append(acc)
-                    pvalue_list.append(p_value)
+            # get features
+            features = df.drop(['label'], axis=1)
+
+            for case_name in cases:
+                acc, p_value = clf(features, label, case=case_name)
+                print('case_name: {} Accuracy: {:.3f}%, p-value: {:.3f}'.format(case_name, acc * 100, p_value))
+
+                case_list.append(case_name)
+                power_list.append(power_level)
+                day_list.append(day)
+                acc_list.append(acc)
+                pvalue_list.append(p_value)
 
     res_df = pd.DataFrame({'case': case_list, 'power': power_list, 'day': day_list, 'acc': acc_list,
-                           'p-value': pvalue_list, 'batch': batch_list})
-    res_df.to_csv('Analysis_Results/ML_results/Tg/Quan_Data_Classification/feature_selection/all.csv', index=False)
+                           'p-value': pvalue_list})
+    res_df.to_csv(f'Analysis_Results/ML_results/{fish_type}/Quan_Data_Classification/feature_selection/'
+                  f'all_normalized_{batch_idx}.csv',
+                  index=False)

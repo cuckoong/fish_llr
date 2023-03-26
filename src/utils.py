@@ -3,35 +3,6 @@ from itertools import groupby
 import pandas as pd
 
 
-def Maximal_Amplitude(df):
-    """
-    :param df:
-    :return: max burst duration
-    """
-    bur_label = 5
-    data = df[:, :, bur_label]
-    max_burdur = np.max(data, axis=1)
-    return max_burdur
-
-
-# Mean of Total Response
-def Mean_of_Total_Response(df):
-    mid_label = 3
-    bur_label = 5
-    # be carefule when busrt is set to 0.
-    data = np.sum(df, axis=1)
-    mean_total_response = (data[:, mid_label] + data[:, bur_label]) / df.shape[1]
-    return mean_total_response
-
-
-# Mean of the Active Response (burst response)
-def Mean_of_Active_Response(df):
-    bur_label = 5
-    data = np.sum(df, axis=1)
-    mean_active_response = data[:, bur_label] / df.shape[1]
-    return mean_active_response
-
-
 # Sample Entropy
 def sampen(L, m=2, r=0.2):
     N = len(L)

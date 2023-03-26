@@ -8,11 +8,12 @@ os.chdir('/Users/panpan/PycharmProjects/old_project/fish_llr')
 
 if __name__ == '__main__':
     mode = 'quantization'
-    fish_type = 'Tg'
-    batch = 1
-    power = 1.2
-    df_all = pd.read_csv('Analysis_Results/ML_results/Tg/Quan_Data_Classification/feature_selection/all.csv')
-    df = df_all[(df_all['batch'] == batch) & (df_all['power'] == power)].copy()
+    fish_type = 'WT'
+    power = 5
+    batch_idx = 'all'
+    df_all = pd.read_csv(f'Analysis_Results/ML_results/{fish_type}/Quan_Data_Classification/feature_selection/'
+                         f'all_normalized_{batch_idx}.csv')
+    df = df_all[df_all['power'] == power].copy()
     # df['SAR'] = df['power'].map({0: 0, 5: 0.009, 1.2: 2, 3: 4.9})
     df['acc'] = df['acc'] * 100
     df['classifier_idx'] = df['case'].map({'NB': 2, 'SVM': 0, 'KNN': 1})
@@ -24,9 +25,6 @@ if __name__ == '__main__':
         plt.subplot(4, 1, idx + 1)
         # bar plot in center
         sns.barplot(x='classifier_idx', y='acc', data=df_sel)
-        # plt.bar(df_sel['classifier_idx'], df_sel['acc'], width=0.5, color='#1f77b4', align='edge')
-        # sns.barplot(x='classifier', y='acc', data=df_sel)
-        # add stars to the top of the bars if p-value less than 0.05
         for i, row in df_sel.iterrows():
             if (row['p-value'] < 0.05) and (row['acc'] > 60):
                 plt.text(row['classifier_idx'] - 0.1, row['acc'] + 0.5, '*', fontsize=10)
@@ -49,5 +47,5 @@ if __name__ == '__main__':
     # add legend for each classifier for whole figure
     # plt.legend(['SVM', 'KNN', 'NB'], loc='upper center', bbox_to_anchor=(0.5, 1.1))
     # plt.show()
-    plt.savefig('Figures/ML_acc/feature_selection/ML_transgenic_{}_{}W_acc_batch{}.png'.format(mode, power, batch),
-                dpi=300)
+    plt.savefig('Figures/ML_acc/feature_selection/ML_{}_{}_{}W_acc_batch{}.png'.format(fish_type, mode, power,
+                                                                                       batch_idx), dpi=300)

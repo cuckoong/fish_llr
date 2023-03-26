@@ -4,21 +4,21 @@ import os
 
 os.chdir('/Users/panpan/PycharmProjects/old_project/fish_llr')
 
-
 if __name__ == '__main__':
-    exp = '1W'
+    fish_typ = 'WT'
+    exp = '3W'
     days = [5, 6, 7, 8]
     batch = 2
     plate = 1
     for day in days:
-        file = 'Data/Quantization/Tg/{}-batch{}/{}-60h-{}dpf-0{}.csv'.format(exp, batch, exp, day, plate)
+        file = 'Data/Quantization/{}/{}-batch{}/{}-60h-{}dpf-0{}.csv'.format(fish_typ, exp, batch, exp, day, plate)
         data = pd.read_csv(file)
         # control: 0
         # exp: 1
         # null: -1
 
-        label_list = [0, 1, -1]
-        count_label_list = [36, 36, 24]
+        # label_list = [0, 1, -1]
+        # count_label_list = [36, 36, 24]
 
         # label_list = [0, 1]
         # count_label_list = [48, 48]
@@ -32,8 +32,8 @@ if __name__ == '__main__':
         # label_list = [0, -1, 0, -1, 0, -1, 1, -1, 1]
         # count_label_list = [2, 1, 37, 1, 9, 9, 34, 1, 2] # 3W-60H-1
 
-        # label_list =       [0,1]
-        # count_label_list = [48,48] # 3W-60H-2
+        label_list = [1, 0]
+        count_label_list = [48, 48]  # 3W-60H-2
         #
         # label_list = [1, -1, 1, 0]
         # count_label_list = [4, 1, 43, 48] # 0W-60H-2

@@ -26,7 +26,9 @@
 
 ML
 1. generate label with ml_generate_label.py and save in Data/Quantization/Tg/{}W-batch{}/{}.npy';
-2. extract bout rest/active features (within 30min after stimulus) with ml_Quan_Data_preprocessing.py, 
+2. (New) get burst duration from data and check if fish do not move all the time, by stats_data_cleaning_burst.py
+3. (New) Normalized data, and Extract bout rest/active features (within 30min after stimulus) with ml_normalized_activity.py,
+2. (Old) extract bout rest/active features (within 30min after stimulus) with ml_Quan_Data_preprocessing.py, 
 results in Processed_data/quantization/Tg/batch{}/features/{}W-60h-{}dpf-0{}-30-min.csv;
 3. do classification with ml_classification.py, result in Analysis_Results/ML_results/Tg/Quan_Data_Classification/
 feature_selection/{}W/acc-batch{}.csv;
@@ -48,9 +50,9 @@ normalized using batch, baseline activity, and light-sensitive level, and compar
 
 ''' 
 Not use:
-4. visualize burst duration with stats_visualize_burst.R, result in Figures/Stats/Quantization/Tg/all/scale/batch{}, 
+1. visualize burst duration with stats_visualize_burst.R, result in Figures/Stats/Quantization/Tg/all/scale/batch{}, 
   all means all activity (burst + mid), burst mean only burst, raw is raw, scale is min_max scaling.
-4. visualize burst duration with stats_visualize_burst.R, result in Figures/Stats/Quantization/Tg/all/scale/batches, 
+2. visualize burst duration with stats_visualize_burst.R, result in Figures/Stats/Quantization/Tg/all/scale/batches, 
   all means all activity (burst + mid), burst mean only burst, raw is raw, scale is min_max scaling.
 '''
 

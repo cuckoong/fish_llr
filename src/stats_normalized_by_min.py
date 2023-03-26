@@ -1,4 +1,5 @@
 import os
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -40,36 +41,35 @@ def narrow_2_wide(df, compare_group_name):
 if __name__ == '__main__':
 
     ACTIVITY_TYPE = 'burdur'
-    fish_type = 'WT'
-    POWER = 3
+    POWER = 1
     batches = [1, 2]
     days = [5, 6, 7, 8]
-    pre_duration = 30
-    post_durations = [30]
+    pre_duration = 5
+    post_durations = [180]
     colors = ['orange', 'blue']
 
-    if POWER == 0:  # 0W/Kg vertical, wt
-        compare_group = ['Control', '0W/Kg SAR']
-    elif POWER == 1:  # 1.6W/Kg vertical, tg
+    if POWER == 1:
         compare_group = ['control', '1.6W/Kg SAR']
-    elif POWER == 1.2:  # 2W/Kg vertical, wt+tg
+    elif POWER == 1.2:
         compare_group = ['Control', '2W/Kg SAR']
-    elif POWER == 3:  # 4.9W/Kg vertical, wt
-        compare_group = ['Control', '4.9W/Kg SAR']
-    elif POWER == 5:  # horizontal, wt
-        compare_group = ['Control', '0.009W/Kg SAR']
 
     for post_duration in post_durations:
         for day in days:
             df_batches = []
             for batch in batches:
-                file_batch = os.path.join(f'Processed_data/quantization/{fish_type}/stat_data/',
-                                          f'{ACTIVITY_TYPE}_{POWER}w_60h_batch{batch}_burst4.csv')
+                file_batch = os.path.join('Processed_data/quantization/Tg/stat_data/',
+                                          '{}_{}w_60h_batch{}_burst4.csv'.format(ACTIVITY_TYPE, POWER, batch))
 
                 df = pd.read_csv(file_batch, index_col=0)
                 # select day 5
-                df = df[df['day'] == day]
+                df = df[df['day'] == day].copy()
+
+                # aggregate activity_sum by minutes
+                df['end_min'] = df['end'].apply(lambda x: int(x // 10 + 1))
+                df = df[['animal', 'label', 'end_min', 'activity_sum']].copy()
+                df = df.groupby(['label', 'animal', 'end_min']).agg({'activity_sum': 'sum'}).reset_index()
                 df['batch'] = batch
+                df['end'] = df['end_min'].copy()
 
                 # split animal string to plate and location
                 df['plate'] = df['animal'].apply(lambda x: x.split('-')[0])
@@ -88,7 +88,7 @@ if __name__ == '__main__':
             # =============================================================================
             # mean baseline activity for each animal
             # acute response -durations - durations post stimulus (at 1800s, 5400s),
-            stimuli_time = [1800, 3600, 5400, 7200]
+            stimuli_time = [180, 360, 540, 720]
 
             # plot the activity_sum along to end, label as color, shown legend, group by label
             # subplot
@@ -105,8 +105,7 @@ if __name__ == '__main__':
                 df_stimulus.loc[df_stimulus['end'] <= stimulus_time, 'location_light'] = -1
 
                 # categorical columns
-                df_stimulus['label'] = df_stimulus['label'].apply(
-                    lambda x: compare_group[0] if x == 0 else compare_group[1])
+                df_stimulus['label'] = df_stimulus['label'].apply(lambda x: compare_group[0] if x == 0 else compare_group[1])
                 df_stimulus['label'] = df_stimulus['label'].astype('category')
 
                 # categorize label column ['batch', 'plate', 'location', 'label']
@@ -115,8 +114,8 @@ if __name__ == '__main__':
                     # df_stimulus[col] = df_stimulus[col].cat.codes
 
                 # ==== step: remove light intensity effects using linear regression method =========================
-                print('linear regression between activity_sum_scaled and location_light')
                 ln_light = LinearRegression()
+
                 # ONLY SELECT THE ON TIME PERIOD
                 X_light_ON = df_stimulus[df_stimulus['location_light'] != -1]['location'].copy()
                 X_light = pd.get_dummies(data=X_light_ON, drop_first=True)
@@ -129,7 +128,7 @@ if __name__ == '__main__':
                 # ===================================================================================================
 
                 # ==== step: remove batch effects using linear regression method =====================================
-                print('linear regression between activity_sum_scaled and batch')
+                # linear regression between activity_sum_scaled and batch
                 ln_batch = LinearRegression()
                 X_batch = pd.get_dummies(data=df_stimulus[['batch']], drop_first=True)
                 ln_batch.fit(X_batch, df_stimulus['activity_sum'])
@@ -138,7 +137,6 @@ if __name__ == '__main__':
                 # ===================================================================================================
 
                 # ==== step: remove baseline activity ==============================================================
-                print('remove baseline activity')
                 df_stimulus['baseline'] = df_stimulus['end'].apply(lambda x: 0 if x <= stimulus_time else 1).values
                 df_baseline = df_stimulus[df_stimulus['baseline'] == 0].groupby('animal_id')[
                     'activity_sum'].mean().reset_index()
@@ -165,16 +163,16 @@ if __name__ == '__main__':
                 ax.text(stimulus_time, 0, 'stimulus', rotation=90, fontsize=10, alpha=0.5)
 
                 # add p-value to before and after stimulus, center
-                ax.text(stimulus_time - pre_duration / 2 - 5, 0.15, 'p= {:.3f}'.format(before_res['p_value']),
+                ax.text(stimulus_time - pre_duration / 2 - 1, 6, 'p= {:.3f}'.format(before_res['p_value']),
                         fontsize=10, horizontalalignment='center')
-                ax.text(stimulus_time + post_duration / 2 - 5, 0.15, 'p= {:.3f}'.format(after_res['p_value']),
+                ax.text(stimulus_time + post_duration / 2 - 1, 6, 'p= {:.3f}'.format(after_res['p_value']),
                         fontsize=10, horizontalalignment='center')
 
                 # add ON/OFF indication in plot, text in bold
                 on_off_list = ['OFF', 'ON']
-                ax.text(stimulus_time - pre_duration / 2 - 5, 0.18, on_off_list[i % 2],
+                ax.text(stimulus_time - pre_duration / 2 - 1, 5, on_off_list[i % 2],
                         fontsize=14, fontweight='bold', horizontalalignment='center')
-                ax.text(stimulus_time + post_duration / 2 - 5, 0.18, on_off_list[(i + 1) % 2],
+                ax.text(stimulus_time + post_duration / 2 - 1, 5, on_off_list[(i + 1) % 2],
                         fontsize=14, fontweight='bold', horizontalalignment='center')
 
                 # legend without frame
@@ -185,16 +183,16 @@ if __name__ == '__main__':
                 ax.set_xlabel('Time (s)')
 
                 # y axis limit
-                ax.set_ylim(-0.1, 0.26)
+                ax.set_ylim(-5, 10)
 
                 # ===================================================================================================
 
             # set title for whole figure
-            fig.suptitle('Day {} - {} - {}'.format(day, ACTIVITY_TYPE, compare_group[1]))
+            fig.suptitle('Day {} - {} - {}w'.format(day, ACTIVITY_TYPE, POWER))
 
             plt.tight_layout()
-            plt.savefig(f'Figures/Stats/Quantization/{fish_type}/burst/acute_response/'
-                        f'{ACTIVITY_TYPE}_{POWER}w_60h_day{day}_post_duration{post_duration}_burst4.png', dpi=300)
-            print(f'save figures to Figures/Stats/Quantization/{fish_type}/burst/acute_response/')
+            plt.savefig('Figures/Stats/Quantization/Tg/burst/long_response/'
+                        '{}_{}w_60h_day{}_post_duration{}_burst4.png'.format(ACTIVITY_TYPE, POWER, day, post_duration),
+                        dpi=300)
 
             # =============================================================================
