@@ -24,7 +24,8 @@ def clf(data, labels, case='SVM', cat_features=[], numeric_features=[]):
     # =============== missing value imputation ===============
     missing_transformer = ColumnTransformer(
         transformers=[
-            ('simple_imputer', SimpleImputer(strategy='median'), numeric_features),
+            # fill the missing value with constant -1
+            ('simple_imputer', SimpleImputer(strategy='constant', fill_value=-1), numeric_features),
             ('indicator', MissingIndicator(), numeric_features)
         ]
     )
@@ -112,13 +113,13 @@ def knn_clf(x, y, pre_steps):
 
 if __name__ == "__main__":
     cases = ['NB', 'SVM', 'KNN']
-    fish_type = 'WT'
-    power_levels = [0, 1.2, 3, 5]
+    fish_type = 'Tg'
+    power_levels = [1, 1.2]  # [0, 1.2, 3, 5]
     time_in_min = 30  # using all 30 minutes data
-    days = [5, 6, 7, 8]
-    plate = 1  # [1, 2]
+    days = [6]
+    plate = 1
     hour = 60
-    batches = [1, 2]
+    batches = [2]
 
     case_list = []
     power_list = []
@@ -129,7 +130,8 @@ if __name__ == "__main__":
 
     for power_level in power_levels:
         for day in days:
-            data_path = f'Processed_data/quantization/{fish_type}/ML_features/{power_level}W_day{day}_data.csv'
+            data_path = f'Processed_data/quantization/{fish_type}/ML_features_intensity' \
+                        f'/{power_level}W_day{day}_data.csv'
             df = pd.read_csv(data_path)
             # data_dir = 'Processed_data/quantization/{}/batch{}/features'.format(fish_type, batch_idx)
             # df = pd.read_csv(os.path.join(data_dir, '{}W-60h-{}dpf-0{}-{}-min.csv'.format(power_level, day,
@@ -147,6 +149,13 @@ if __name__ == "__main__":
             # get labels
             label = df['label']
 
+            # visualze data distribution for each label
+            import seaborn as sns
+            import matplotlib.pyplot as plt
+            for col in df.columns:
+                sns.displot(data=df, x=col, hue=label, shrink=.8, height=5, aspect=2)
+                plt.show()
+
             # get features
             features = df.drop(['label'], axis=1)
 
@@ -162,6 +171,6 @@ if __name__ == "__main__":
 
     res_df = pd.DataFrame({'case': case_list, 'power': power_list, 'day': day_list, 'acc': acc_list,
                            'p-value': pvalue_list})
-    res_df.to_csv(f'Analysis_Results/ML_results/{fish_type}/Quan_Data_Classification/feature_selection/'
+    res_df.to_csv(f'Analysis_Results/ML_results/{fish_type}/Quan_Data_Classification/feature_selection_intensity/'
                   f'all_normalized_{batch_idx}.csv',
                   index=False)
