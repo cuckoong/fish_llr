@@ -1,6 +1,11 @@
+import os
+
 import numpy as np
 from itertools import groupby
 import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 
 # Sample Entropy
@@ -150,3 +155,132 @@ def get_features(data, mode, period=3):
     features_df.columns = column_list
 
     return features_df
+
+
+def group_batch_data(fish_type, activity, power, batches, day):
+    df_list = []
+    # group batch together
+    for batch in batches:
+        file_batch = os.path.join(f'Processed_data/quantization/{fish_type}/stat_data/',
+                                  '{}_{}w_60h_batch{}_burst4.csv'.format(activity, power, batch))
+
+        df = pd.read_csv(file_batch, index_col=0)
+
+        # select day
+        df = df[df['day'] == day].copy()
+        df['batch'] = batch
+
+        # split animal string to plate and location
+        df['plate'] = df['animal'].apply(lambda x: x.split('-')[0])
+        df['location'] = df['animal'].apply(lambda x: x.split('-')[1])
+
+        # concat batch, plate, location to animal_id
+        df['animal_id'] = df['batch'].astype(str) + '-' + df['plate'] + '-' + df['location']
+
+        # light intensity data
+        df_intensities = []
+        for stim_time in [1800, 3600, 5400, 7200]:
+            file_intensity = os.path.join(f'Processed_data/light_intensity/{fish_type}/'
+                                          f'{power}W-batch{batch}/'
+                                          f'{power}W-60h-{day}dpf-01/'
+                                          f'{(stim_time - 30) * 1000}_'
+                                          f'{(stim_time + 30) * 1000}.csv')
+            # get light intensity data
+            df_intensity = pd.read_csv(file_intensity)
+            df_intensities.append(df_intensity.copy())
+        df_intensities = pd.concat(df_intensities, axis=0).reset_index(drop=True)
+
+        # merge light intensity and behavior data, then append
+        df = pd.merge(df, df_intensities, on=['animal_id', 'end'], how='left')
+        df_list.append(df)
+
+    # concat all batches
+    df_all_batches = pd.concat(df_list, axis=0).reset_index(drop=True)
+
+    # select columns
+    df_all_batches = df_all_batches[['batch', 'plate', 'location', 'end', 'activity_sum',
+                                     'label', 'animal_id', 'light_intensity']]
+    return df_all_batches
+
+
+def get_peri_stimulus_data(df, stim_time, pre_second, post_second):
+    # select data for each stimulus from time - duration to time + duration
+    df_periStim = df[(df['end'] >= stim_time - pre_second) &
+                     (df['end'] <= stim_time + post_second)].copy()
+
+    # check if light intensity column has null values
+    if df_periStim['light_intensity'].isnull().values.any():
+        raise ValueError('light intensity column has null values')
+
+    # categorical columns
+    df_periStim['label'] = df_periStim['label'].astype('category')
+    return df_periStim
+
+
+def rm_all_baseline(df, stimulus_time):
+    print('linear regression between activity_sum_scaled and'
+          ' light_intensity, batch, and pre_stimulus')
+    # batch (1, 2) to 0, 1
+    df = df.copy()
+    df['batch_dummy'] = df['batch'].apply(lambda x: 0 if x == 1 else 1).values
+    # convert to categorical
+    df['batch_dummy'] = df['batch_dummy'].astype('category')
+
+    # pre_stimulus
+    df['baseline'] = df['end'].apply(lambda x: 0 if x <= stimulus_time else 1).values
+    df_baseline = df[df['baseline'] == 0].groupby('animal_id')['activity_sum'].mean().reset_index()
+
+    # merge baseline activity to df
+    df = pd.merge(df, df_baseline, on='animal_id', how='left', suffixes=('', '_baseline'))
+
+    # linear regression
+    X = df[['light_intensity', 'batch_dummy', 'activity_sum_baseline']].copy()
+    y = df['activity_sum'].copy()
+
+    # Create a pipeline for data preprocessing and linear regression model
+    pipe = Pipeline([
+        ("scaler", StandardScaler()),
+        ("regressor", LinearRegression())
+    ])
+
+    # fit the pipeline
+    pipe.fit(X, y)
+
+    # get fit scores and coefficients
+    print('fit score: ', pipe.score(X, y))
+    print('coefficients: ', pipe.named_steps['regressor'].coef_)
+
+    df['baseline'] = pipe.predict(X)
+    df['activity_sum'] = df['activity_sum'].copy() - df['baseline'].copy()
+    return df
+
+
+def rm_light_baseline(df):
+    print('linear regression between activity_sum_scaled and location_light')
+    ln_light = LinearRegression()
+    X_light = df['light_intensity'].copy().values.reshape(-1, 1)
+    y_light = df['activity_sum'].copy().values.reshape(-1, 1)
+    ln_light.fit(X_light, y_light)
+
+    df['light_effect'] = ln_light.predict(X_light)
+    df['activity_sum'] = df['activity_sum'].copy() - df['light_effect'].copy()
+    return df
+
+
+def rm_batch_baseline(df):
+    ln_batch = LinearRegression()
+    X_batch = pd.get_dummies(data=df[['batch']], drop_first=True)
+    ln_batch.fit(X_batch, df['activity_sum'])
+    df['batch_effect'] = ln_batch.predict(X_batch)
+    df['activity_sum'] = df['activity_sum'].copy() - df['batch_effect'].copy()
+    return df
+
+
+def rm_animal_baseline(df, stimulus_time):
+    df['baseline'] = df['end'].apply(lambda x: 0 if x <= stimulus_time else 1).values
+    df_baseline = df[df['baseline'] == 0].groupby('animal_id')['activity_sum'].mean().reset_index()
+
+    # merge baseline activity to df
+    df = pd.merge(df, df_baseline, on='animal_id', how='left', suffixes=('', '_baseline'))
+    df['activity_sum'] = df['activity_sum'].copy() - df['activity_sum_baseline'].copy()
+    return df
