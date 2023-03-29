@@ -1,85 +1,9 @@
 import os
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LinearRegression
-from utils import num_rest_active_bout
+from utils import num_rest_active_bout, group_batch_data, get_peri_stimulus_data, rm_all_baseline
 
 os.chdir('/Users/panpan/PycharmProjects/old_project/fish_llr')
-
-
-def group_batch_data(activity, power, batches):
-    df_list = []
-    # group batch together
-    for batch in batches:
-        file_batch = os.path.join(f'Processed_data/quantization/{fish_type}/stat_data/',
-                                  '{}_{}w_60h_batch{}_burst4.csv'.format(activity, power, batch))
-
-        df = pd.read_csv(file_batch, index_col=0)
-        # select day 5
-        df = df[df['day'] == day].copy()
-        df['batch'] = batch
-
-        # split animal string to plate and location
-        df['plate'] = df['animal'].apply(lambda x: x.split('-')[0])
-        df['location'] = df['animal'].apply(lambda x: x.split('-')[1])
-
-        # concat batch, plate, location to animal_id
-        df['animal_id'] = df['batch'].astype(str) + '-' + df['plate'] + '-' + df['location']
-        df_list.append(df)
-
-    # concat all batches
-    df_all_batches = pd.concat(df_list, axis=0).reset_index(drop=True)
-
-    # select columns
-    df_all_batches = df_all_batches[['batch', 'plate', 'location', 'end', 'activity_sum', 'label', 'animal_id']]
-    return df_all_batches
-
-
-def get_peri_stimulus_data(df, stim_time, pre_second, post_second):
-    # select data for each stimulus from time - duration to time + duration
-    df_periStim = df[(df['end'] >= stim_time - pre_second) & (df['end'] <= stim_time + post_second)].copy()
-
-    # set dim to -1 for each location
-    df_periStim['location_light'] = df_periStim['location'].copy()
-    df_periStim.loc[df_periStim['end'] <= stim_time, 'location_light'] = -1
-
-    # categorical columns
-    df_periStim['label'] = df_periStim['label'].astype('category')
-    return df_periStim
-
-
-def rm_light_baseline(df):
-    print('linear regression between activity_sum_scaled and location_light')
-    ln_light = LinearRegression()
-    # ONLY SELECT THE ON TIME PERIOD
-    X_light_ON = df[df['location_light'] != -1]['location'].copy()
-    X_light = pd.get_dummies(data=X_light_ON, drop_first=True)
-    y_light_ON = df[df['location_light'] != -1]['activity_sum'].copy()
-
-    ln_light.fit(X_light, y_light_ON)
-    X_all = pd.get_dummies(data=df['location'].copy(), drop_first=True)
-    df['light_effect'] = ln_light.predict(X_all)
-    df['activity_sum'] = df['activity_sum'].copy() - df['light_effect'].copy()
-    return df
-
-
-def rm_batch_baseline(df):
-    ln_batch = LinearRegression()
-    X_batch = pd.get_dummies(data=df[['batch']], drop_first=True)
-    ln_batch.fit(X_batch, df['activity_sum'])
-    df['batch_effect'] = ln_batch.predict(X_batch)
-    df['activity_sum'] = df['activity_sum'].copy() - df['batch_effect'].copy()
-    return df
-
-
-def rm_animal_baseline(df):
-    df['baseline'] = df['end'].apply(lambda x: 0 if x <= stimulus_time else 1).values
-    df_baseline = df[df['baseline'] == 0].groupby('animal_id')['activity_sum'].mean().reset_index()
-
-    # merge baseline activity to df
-    df = pd.merge(df, df_baseline, on='animal_id', how='left', suffixes=('', '_baseline'))
-    df['activity_sum'] = df['activity_sum'].copy() - df['activity_sum_baseline'].copy()
-    return df
 
 
 def get_features(df):
@@ -103,15 +27,15 @@ def get_features(df):
 
 if __name__ == '__main__':
     ACTIVITY_TYPE = 'burdur'
-    POWER = 3
+    POWER = 1.2
     BATCH_LIST = [1, 2]
     days = [5, 6, 7, 8]
     pre_duration = 30
-    post_duration = 1800  # 30 min
+    post_duration = 30  # 30s
     stimuli_time = [1800, 3600, 5400, 7200]
-    fish_type = 'WT'
+    fish_type = 'Tg'
 
-    output_path = f'Processed_data/quantization/{fish_type}/ML_features/'
+    output_path = f'Processed_data/quantization/{fish_type}/ML_features_intensity/'
 
     for day in days:
         # save results
@@ -119,7 +43,7 @@ if __name__ == '__main__':
         column_list = []
         label_list = []
 
-        df_batches = group_batch_data(ACTIVITY_TYPE, POWER, BATCH_LIST)
+        df_batches = group_batch_data(fish_type, ACTIVITY_TYPE, POWER, BATCH_LIST, day)
 
         # =============================================================================
         # mean baseline activity for each animal
@@ -128,6 +52,10 @@ if __name__ == '__main__':
         for stimulus_time in stimuli_time:
             df_stimulus = get_peri_stimulus_data(df_batches, stimulus_time, pre_duration, post_duration)
 
+            # ==== step: remove all three effects using linear regression method ===============================
+            df_rm = rm_all_baseline(df_stimulus, stimulus_time)
+
+            '''
             # ==== step: remove light intensity effects using linear regression method =========================
             print('linear regression between activity_sum_scaled and location_light')
             df_stimulus_rmLight = rm_light_baseline(df_stimulus)
@@ -142,9 +70,10 @@ if __name__ == '__main__':
             print('remove baseline activity')
             df_stimulus_rmBaseline = rm_animal_baseline(df_stimulus_rmBatch)
             # ===================================================================================================
+            '''
 
             # =============== calculate the features ==================================================
-            features_period_array = get_features(df_stimulus_rmBaseline)
+            features_period_array = get_features(df_rm)
             features_period_list.append(features_period_array)
             column_list.extend(
                 item.format(stimulus_time) for item in

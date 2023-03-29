@@ -3,8 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pingouin as pg
-
-from sklearn.linear_model import LinearRegression
+from utils import rm_all_baseline
 
 sns.set_style('whitegrid')
 sns.set_context('paper')
@@ -38,10 +37,9 @@ def narrow_2_wide(df, compare_group_name):
 
 
 if __name__ == '__main__':
-
     ACTIVITY_TYPE = 'burdur'
-    fish_type = 'WT'
-    POWER = 3
+    fish_type = 'Tg'
+    POWER = 1
     batches = [1, 2]
     days = [5, 6, 7, 8]
     pre_duration = 30
@@ -63,6 +61,7 @@ if __name__ == '__main__':
         for day in days:
             df_batches = []
             for batch in batches:
+                # behavior data
                 file_batch = os.path.join(f'Processed_data/quantization/{fish_type}/stat_data/',
                                           f'{ACTIVITY_TYPE}_{POWER}w_60h_batch{batch}_burst4.csv')
 
@@ -77,13 +76,28 @@ if __name__ == '__main__':
 
                 # concat batch, plate, location to animal_id
                 df['animal_id'] = df['batch'].astype(str) + '-' + df['plate'] + '-' + df['location']
+
+                # light intensity data
+                df_intensities = []
+                for stim_time in [1800, 3600, 5400, 7200]:
+                    file_intensity = os.path.join(f'Processed_data/light_intensity/{fish_type}/{POWER}W-batch{batch}/'
+                                                  f'{POWER}W-60h-{day}dpf-01/'
+                                                  f'{(stim_time - 30) * 1000}_{(stim_time + 30) * 1000}.csv')
+                    # get light intensity data
+                    df_intensity = pd.read_csv(file_intensity)
+                    df_intensities.append(df_intensity)
+                df_intensities = pd.concat(df_intensities, axis=0).reset_index(drop=True)
+
+                # merge light intensity and behavior data, then append
+                df = pd.merge(df, df_intensities, on=['animal_id', 'end'], how='left')
                 df_batches.append(df)
 
             # concat all batches
             df_batches = pd.concat(df_batches, axis=0).reset_index(drop=True)
 
             # select columns
-            df_batches = df_batches[['batch', 'plate', 'location', 'end', 'activity_sum', 'label', 'animal_id']]
+            df_batches = df_batches[['batch', 'plate', 'location', 'end', 'activity_sum', 'label', 'animal_id',
+                                     'light_intensity']]
 
             # =============================================================================
             # mean baseline activity for each animal
@@ -100,9 +114,9 @@ if __name__ == '__main__':
                 df_stimulus = df_batches[(df_batches['end'] >= stimulus_time - pre_duration) &
                                          (df_batches['end'] <= stimulus_time + post_duration)].copy()
 
-                # set dim to -1 for each location
-                df_stimulus['location_light'] = df_stimulus['location'].copy()
-                df_stimulus.loc[df_stimulus['end'] <= stimulus_time, 'location_light'] = -1
+                # check if light intensity column has null values
+                if df_stimulus['light_intensity'].isnull().values.any():
+                    raise ValueError('light intensity column has null values')
 
                 # categorical columns
                 df_stimulus['label'] = df_stimulus['label'].apply(
@@ -110,22 +124,21 @@ if __name__ == '__main__':
                 df_stimulus['label'] = df_stimulus['label'].astype('category')
 
                 # categorize label column ['batch', 'plate', 'location', 'label']
-                for col in ['batch', 'plate', 'location_light', 'animal_id']:
+                for col in ['batch', 'plate', 'animal_id']:
                     df_stimulus[col] = df_stimulus[col].astype('category')
                     # df_stimulus[col] = df_stimulus[col].cat.codes
 
+                '''
                 # ==== step: remove light intensity effects using linear regression method =========================
-                print('linear regression between activity_sum_scaled and location_light')
-                ln_light = LinearRegression()
-                # ONLY SELECT THE ON TIME PERIOD
-                X_light_ON = df_stimulus[df_stimulus['location_light'] != -1]['location'].copy()
-                X_light = pd.get_dummies(data=X_light_ON, drop_first=True)
-                y_light_ON = df_stimulus[df_stimulus['location_light'] != -1]['activity_sum'].copy()
+                print('linear regression between activity_sum_scaled and location_light_intensity')
 
-                ln_light.fit(X_light, y_light_ON)
-                X_all = pd.get_dummies(data=df_stimulus['location'].copy(), drop_first=True)
-                df_stimulus['light_effect'] = ln_light.predict(X_all)
-                df_stimulus['activity_sum'] = df_stimulus['activity_sum'].copy() - df_stimulus['light_effect']
+                ln_light = LinearRegression()
+                X_light = df_stimulus['light_intensity'].copy().values.reshape(-1, 1)
+                y_light = df_stimulus['activity_sum'].copy().values.reshape(-1, 1)
+                ln_light.fit(X_light, y_light)
+
+                df_stimulus['light_effect'] = ln_light.predict(X_light)
+                df_stimulus['activity_sum'] = df_stimulus['activity_sum'].copy() - df_stimulus['light_effect'].copy()
                 # ===================================================================================================
 
                 # ==== step: remove batch effects using linear regression method =====================================
@@ -134,7 +147,7 @@ if __name__ == '__main__':
                 X_batch = pd.get_dummies(data=df_stimulus[['batch']], drop_first=True)
                 ln_batch.fit(X_batch, df_stimulus['activity_sum'])
                 df_stimulus['batch_effect'] = ln_batch.predict(X_batch)
-                df_stimulus['activity_sum'] = df_stimulus['activity_sum'].copy() - df_stimulus['batch_effect']
+                df_stimulus['activity_sum'] = df_stimulus['activity_sum'].copy() - df_stimulus['batch_effect'].copy()
                 # ===================================================================================================
 
                 # ==== step: remove baseline activity ==============================================================
@@ -147,6 +160,9 @@ if __name__ == '__main__':
                 df_stimulus = pd.merge(df_stimulus, df_baseline, on='animal_id', how='left', suffixes=('', '_baseline'))
                 df_stimulus['activity_sum'] = df_stimulus['activity_sum'].copy() - df_stimulus['activity_sum_baseline']
                 # ===================================================================================================
+                '''
+                # ==== step: remove all three effects using linear regression method ===============================
+                df_rm = rm_all_baseline(df_stimulus, stimulus_time)
 
                 # ======== Hotelling’s T-squared test for before and after stimulus =================================
                 # before stimulus
@@ -193,8 +209,6 @@ if __name__ == '__main__':
             fig.suptitle('Day {} - {} - {}'.format(day, ACTIVITY_TYPE, compare_group[1]))
 
             plt.tight_layout()
-            plt.savefig(f'Figures/Stats/Quantization/{fish_type}/burst/acute_response/'
+            plt.savefig(f'Figures/Stats/Quantization/{fish_type}/burst/acute_response_intensity/'
                         f'{ACTIVITY_TYPE}_{POWER}w_60h_day{day}_post_duration{post_duration}_burst4.png', dpi=300)
-            print(f'save figures to Figures/Stats/Quantization/{fish_type}/burst/acute_response/')
-
             # =============================================================================
