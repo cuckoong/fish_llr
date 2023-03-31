@@ -1,5 +1,6 @@
 import pandas as pd
 from src.behaviour_features_utils import measure_dark_adjustment_metrics, measure_startle_response
+from src.utils import rm_animal_baseline
 
 
 def test_measure_dark_adjustment_metrics():
@@ -15,18 +16,22 @@ def test_measure_dark_adjustment_metrics():
         'activity_sum': [0.1, 0.2, 0.3, 0.1, 0,
                          0.05, 0.15, 0.25, 0.3, 0.3,
                          0.07, 0.17, 0.27, 0, 0.2,
-                         0.07, 0.17, 0.27, 0.15, 0.15]
+                         0.07, 0.17, 0.27, 0.15, 0.15],
+        'activity_sum_baseline_std': [0.1, 0.1, 0.1, 0.1, 0.1,
+                                      0.1, 0.1, 0.1, 0.1, 0.1,
+                                      0.1, 0.1, 0.1, 0.1, 0.1,
+                                      0.1, 0.1, 0.1, 0.1, 0.1]
     })
 
     light_off = 1800
-    activity_threshold = 0.15
-    rest_threshold = 0.12
+    activity_threshold = 1.5
+    rest_threshold = 1.2
     min_dark_stable_duration = 1
     off_window = 1800
 
     increase_intensities, increase_latencies, dark_adjustment_intervals, bout_intensities, bout_counts = \
-        measure_dark_adjustment_metrics(data, light_off, activity_threshold, rest_threshold, min_dark_stable_duration,
-                                        off_window)
+        measure_dark_adjustment_metrics(data, light_off, activity_threshold, rest_threshold,
+                                        min_dark_stable_duration, off_window)
 
     assert increase_intensities == {1: 0.30, 2: 0.3, 3: 0.27, 4: 0.27}
     assert increase_latencies == {1: 3, 2: 4, 3: 3, 4: 3}
@@ -51,14 +56,19 @@ def test_measure_startle_response():
                          0.0, 0.0, 0.0, 0.0, 0.0,
                          0.0, 0.5, 0.4, 0.6, 0.5,
                          0.0, 0.6, 0.0, 0.0, 0.3,
-                         0.0, 0.6, 0.0, 0.0, 0.1]
+                         0.0, 0.6, 0.0, 0.0, 0.1],
+        'activity_sum_baseline_std': [0.1, 0.1, 0.1, 0.1, 0.1,
+                                      0.1, 0.1, 0.1, 0.1, 0.1,
+                                      0.1, 0.1, 0.1, 0.1, 0.1,
+                                      0.1, 0.1, 0.1, 0.1, 0.1,
+                                      0.1, 0.1, 0.1, 0.1, 0.1]
     })
 
     light_on = 1800
-    startle_threshold = 0.5
+    startle_threshold = 5
     startle_window = 3
-    stabilization_threshold = 0.2
-    activity_threshold = 0.1
+    stabilization_threshold = 2
+    activity_threshold = 1
     on_window = 1800
     min_stable_duration = 2
 

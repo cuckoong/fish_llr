@@ -3,6 +3,7 @@ import os
 import numpy as np
 from itertools import groupby
 import pandas as pd
+from scipy.stats._mstats_basic import winsorize
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -267,20 +268,69 @@ def rm_light_baseline(df):
     return df
 
 
-def rm_batch_baseline(df):
-    ln_batch = LinearRegression()
-    X_batch = pd.get_dummies(data=df[['batch']], drop_first=True)
-    ln_batch.fit(X_batch, df['activity_sum'])
-    df['batch_effect'] = ln_batch.predict(X_batch)
-    df['activity_sum'] = df['activity_sum'].copy() - df['batch_effect'].copy()
-    return df
-
-
-def rm_animal_baseline(df, stimulus_time):
-    df['baseline'] = df['end'].apply(lambda x: 0 if x <= stimulus_time else 1).values
-    df_baseline = df[df['baseline'] == 0].groupby('animal_id')['activity_sum'].mean().reset_index()
+def rm_batch_baseline(df, baseline_interval):
+    """
+    remove batch baseline
+    :param df:
+    :param baseline_interval: tuple, (start, end)
+    :return:
+    """
+    df = df.copy()
+    df['batch_baseline'] = df['end'].apply(lambda x: 0 if (x <= baseline_interval[1]) &
+                                                          (x >= baseline_interval[0]) else 1).values
+    df_baseline_mean = df[df['batch_baseline'] == 0].groupby('batch')['activity_sum'].mean().reset_index()
+    df_baseline_std = df[df['batch_baseline'] == 0].groupby('batch')['activity_sum'].std().reset_index()
 
     # merge baseline activity to df
-    df = pd.merge(df, df_baseline, on='animal_id', how='left', suffixes=('', '_baseline'))
-    df['activity_sum'] = df['activity_sum'].copy() - df['activity_sum_baseline'].copy()
+    df = pd.merge(df, df_baseline_mean, on='batch', how='left', suffixes=('', '_baseline_batch_mean'))
+    df = pd.merge(df, df_baseline_std, on='batch', how='left', suffixes=('', '_baseline_batch_std'))
+
+    # check if any std is 0
+    if df['activity_sum_baseline_batch_std'].isnull().values.any():
+        raise ValueError('std is 0')
+
+    df['activity_sum'] = df['activity_sum'].copy() - df['activity_sum_baseline_batch_mean'].copy()
+    df['activity_sum'] = df['activity_sum'].copy() / df['activity_sum_baseline_batch_std'].copy()
     return df
+
+
+def rm_animal_baseline(df, baseline_interval):
+    """
+    remove animal baseline
+    :param df:
+    :param baseline_interval: tuple, (start, end)
+    :return:
+    """
+    df = df.copy()
+    df['baseline'] = df['end'].apply(lambda x: 0 if (x <= baseline_interval[1]) &
+                                                    (x >= baseline_interval[0]) else 1).values
+
+    # winsorize transform and then do z-score for individual animal
+    df_baseline_mean = df[df['baseline'] == 0].groupby('animal_id')['activity_sum']. \
+        apply(lambda x: winsorize(x, limits=(0.05, 0.05)).mean()).reset_index()
+    df_baseline_std = df[df['baseline'] == 0].groupby('animal_id')['activity_sum']. \
+        apply(lambda x: winsorize(x, limits=(0.05, 0.05)).std()).reset_index()
+
+    # merge baseline activity to df
+    df = pd.merge(df, df_baseline_mean, on='animal_id', how='left', suffixes=('', '_baseline_mean'))
+    df = pd.merge(df, df_baseline_std, on='animal_id', how='left', suffixes=('', '_baseline_std'))
+    df['activity_sum'] = (df['activity_sum'].copy() - df['activity_sum_baseline_mean'])
+    # df['activity_sum_scaled'] = df['activity_sum'].copy() / df['activity_sum_baseline_std']
+    return df
+
+
+def rm_linear_trend(df):
+    df = df.copy()
+    df['time'] = df['end'].copy() - df['end'].min()
+
+    # linear regression to remove linear trend
+    ln = LinearRegression()
+    X = df['time'].copy().values.reshape(-1, 1)
+    y = df['activity_sum'].copy().values.reshape(-1, 1)
+
+    ln.fit(X, y)
+    df['linear_trend'] = ln.predict(X)
+    df['activity_sum'] = df['activity_sum'].copy() - df['linear_trend'].copy()
+    return df
+
+
