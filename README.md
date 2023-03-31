@@ -24,10 +24,18 @@
 
 
 
-ML
-1. generate label with ml_generate_label.py and save in Data/Quantization/Tg/{}W-batch{}/{}.npy';
-2. (New) get burst duration from data and check if fish do not move all the time, by stats_data_cleaning_burst.py
-3. (New) Normalized data, and Extract bout rest/active features (within 30min after stimulus) with ml_normalized_activity.py,
+#### common steps:
+1. generate label with ml_generate_label.py and save in Data/Quantization/{fish_type}/{}W-batch{}/{}.npy';
+2. get burst duration from data and check if fish do not move all the time, by stats_data_cleaning_burst.py
+3. Generate background image into 'Figures/background_image/{}W-batch{}/{}W-60h-{}dpf-01', 
+example png name is 'background_xxxx_A1.png', where xxxx is the frame number, A1 is the well name;
+4. Extract light intensity with video_extract.py, save figures to 'Figures/light_intensity/Tg/
+{}W-batch{}/{}W-60h-{}dpf-01/{}_{}_raw.png' & 'Figures/light_intensity/Tg/{}W-batch{}/
+{}W-60h-{}dpf-01/{}_{}_rm_baseline.png'; save processed_data to 'Processed_data/light_intensity/Tg/{}W-batch{}/
+{}W-60h-{}dpf-01/{}W-60h-{}dpf-01/{}_{}.pickle';
+
+##### ML
+1. (New) Normalized data, and Extract bout rest/active features (within 30min after stimulus) with ml_normalized_activity.py,
 2. (Old) extract bout rest/active features (within 30min after stimulus) with ml_Quan_Data_preprocessing.py, 
 results in Processed_data/quantization/Tg/batch{}/features/{}W-60h-{}dpf-0{}-30-min.csv;
 3. do classification with ml_classification.py, result in Analysis_Results/ML_results/Tg/Quan_Data_Classification/
@@ -35,27 +43,15 @@ feature_selection/{}W/acc-batch{}.csv;
 4. Visualize classification results with ml_acc_visualize_transgenic.py;
 
 
-Statistics for burst duration (using normalized)
-1. generate label with ml_generate_label.py and save in Data/Quantization/Tg/{}W-batch{}/{}.npy
-2. get burst duration from data and check if fish do not move all the time, by stats_data_cleaning_burst.py
-3. normalized data (batch + well + baseline), visualize and statistical comparison (stats_normalized.py)
+##### Statistics for burst duration (using normalized)
+1. visualize and statistical comparison for acute response(stats_normalized_by_second.py),
+collect short-time response, normalized using batch, baseline activity, and light-sensitive level,
+and compare the differences using hotelling t2 test (stats_burst_duration.py), 
+2. visualize and statistical comparison for 30 minutes activity (stats_normalized_by_min.py), 
+collect response, normalized using batch, baseline activity, and light-sensitive level,
+and compare the differences using hotelling t2 test (stats_burst_duration.py),
 
-Statistics for burst duration
-1. generate label with ml_generate_label.py and save in Data/Quantization/Tg/{}W-batch{}/{}.npy
-2. get burst duration from data and check if fish do not move all the time, by stats_data_cleaning_burst.py
-3. visualize and statistical comparison for acute response(stats_normalized_by_second.py), collect short-time response,
-normalized using batch, baseline activity, and light-sensitive level, and compare the differences using hotelling t2 test (stats_burst_duration.py), 
-4. visualize and statistical comparison for 30 minutes activity (stats_normalized_by_min.py), collect response, 
-normalized using batch, baseline activity, and light-sensitive level, and compare the differences using hotelling t2 test (stats_burst_duration.py),
-
-''' 
-Not use:
-1. visualize burst duration with stats_visualize_burst.R, result in Figures/Stats/Quantization/Tg/all/scale/batch{}, 
-  all means all activity (burst + mid), burst mean only burst, raw is raw, scale is min_max scaling.
-2. visualize burst duration with stats_visualize_burst.R, result in Figures/Stats/Quantization/Tg/all/scale/batches, 
-  all means all activity (burst + mid), burst mean only burst, raw is raw, scale is min_max scaling.
-'''
-
+##### Statistics for burst duration (using raw data) (Not used)
 Statistics for swimming distance
 1. generate label with ml_generate_label.py and save in Data/Quantization/Tg/{}W-batch{}/{}.npy
 2. get swimming distance (sum) from data and summarise data into one file, by stats_data_cleaning_distance.py, 
