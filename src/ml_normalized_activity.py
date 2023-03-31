@@ -31,7 +31,7 @@ if __name__ == '__main__':
     BATCH_LIST = [1, 2]
     days = [5, 6, 7, 8]
     pre_duration = 30
-    post_duration = 30  # 30s
+    post_duration = 1770  # 30s
     stimuli_time = [1800, 3600, 5400, 7200]
     fish_type = 'Tg'
 
@@ -40,6 +40,7 @@ if __name__ == '__main__':
     for day in days:
         # save results
         features_period_list = []
+        column_list = []
         column_list = []
         label_list = []
 

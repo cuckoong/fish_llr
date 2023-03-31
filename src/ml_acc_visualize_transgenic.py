@@ -8,10 +8,11 @@ os.chdir('/Users/panpan/PycharmProjects/old_project/fish_llr')
 
 if __name__ == '__main__':
     mode = 'quantization'
-    fish_type = 'WT'
-    power = 5
+    fish_type = 'Tg'
+    power = 1
     batch_idx = 'all'
-    df_all = pd.read_csv(f'Analysis_Results/ML_results/{fish_type}/Quan_Data_Classification/feature_selection/'
+    df_all = pd.read_csv(f'Analysis_Results/ML_results/{fish_type}/Quan_Data_Classification/'
+                         f'feature_selection_intensity/'
                          f'all_normalized_{batch_idx}.csv')
     df = df_all[df_all['power'] == power].copy()
     # df['SAR'] = df['power'].map({0: 0, 5: 0.009, 1.2: 2, 3: 4.9})
@@ -47,5 +48,5 @@ if __name__ == '__main__':
     # add legend for each classifier for whole figure
     # plt.legend(['SVM', 'KNN', 'NB'], loc='upper center', bbox_to_anchor=(0.5, 1.1))
     # plt.show()
-    plt.savefig('Figures/ML_acc/feature_selection/ML_{}_{}_{}W_acc_batch{}.png'.format(fish_type, mode, power,
-                                                                                       batch_idx), dpi=300)
+    plt.savefig('Figures/ML_acc/feature_selection_intensity'
+                '/ML_{}_{}_{}W_acc_batch{}.png'.format(fish_type, mode, power, batch_idx), dpi=300)

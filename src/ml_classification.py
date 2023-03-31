@@ -116,10 +116,10 @@ if __name__ == "__main__":
     fish_type = 'Tg'
     power_levels = [1, 1.2]  # [0, 1.2, 3, 5]
     time_in_min = 30  # using all 30 minutes data
-    days = [6]
+    days = [5, 6, 7, 8]
     plate = 1
     hour = 60
-    batches = [2]
+    batches = [1, 2]
 
     case_list = []
     power_list = []
@@ -133,9 +133,6 @@ if __name__ == "__main__":
             data_path = f'Processed_data/quantization/{fish_type}/ML_features_intensity' \
                         f'/{power_level}W_day{day}_data.csv'
             df = pd.read_csv(data_path)
-            # data_dir = 'Processed_data/quantization/{}/batch{}/features'.format(fish_type, batch_idx)
-            # df = pd.read_csv(os.path.join(data_dir, '{}W-60h-{}dpf-0{}-{}-min.csv'.format(power_level, day,
-            #                                                                               plate, time_in_min)))
 
             # check batch number
             if len(batches) == 1:
@@ -149,12 +146,12 @@ if __name__ == "__main__":
             # get labels
             label = df['label']
 
-            # visualze data distribution for each label
-            import seaborn as sns
-            import matplotlib.pyplot as plt
-            for col in df.columns:
-                sns.displot(data=df, x=col, hue=label, shrink=.8, height=5, aspect=2)
-                plt.show()
+            # # visualze data distribution for each label
+            # import seaborn as sns
+            # import matplotlib.pyplot as plt
+            # for col in df.columns:
+            #     sns.displot(data=df, x=col, hue=label, shrink=.8, height=5, aspect=2)
+            #     plt.show()
 
             # get features
             features = df.drop(['label'], axis=1)
