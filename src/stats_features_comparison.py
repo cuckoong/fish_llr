@@ -1,4 +1,6 @@
 import os
+
+import pandas as pd
 import seaborn as sns
 from utils import group_batch_data
 from utils import rm_animal_baseline, rm_batch_baseline, rm_linear_trend
@@ -75,17 +77,41 @@ if __name__ == '__main__':
 
         # ===== startle response after light ON ================================================
         # metrics: startle response (latency and maximum), and adjust to light interval
-        startle_intensities, startle_latencies, adjustment_intervals, bout_intensities, bout_counts \
+        startle_intensities, startle_latencies, adjustment_intervals, active_bout_intensities, active_bout_counts \
             = measure_startle_response(df_batches, on_off[0], startle_threshold=3, startle_window=5,
-                                       stable_threshold=2, activity_threshold=0.5, on_window=on_off_duration,
-                                       min_stable_duration=3)
+                                       stable_threshold=2, activity_threshold=0.1, on_window=on_off_duration,
+                                       min_stable_duration=2)
 
         # ===== startle response after light OFF ===============================================
         # metrics: brief increase of activity after light off (maximum), and adjust to dark interval
         # metrics (2): rest bouts (latency, duration, and intensity)
         increase_intensities, increase_latencies, rest_intervals, rest_bout_intensities, rest_bout_counts \
-            = measure_dark_adjustment_metrics(df_batches, off_on[0], activity_threshold=0.5, rest_threshold=0.5,
-                                              min_dark_stable_duration=3, off_window=on_off_duration)
+            = measure_dark_adjustment_metrics(df_batches, off_on[0], activity_threshold=2, rest_threshold=2,
+                                              min_dark_stable_duration=2, off_window=on_off_duration)
+
+        # ===== Get features from feature dicts =============================================
+        features = pd.DataFrame([startle_intensities, startle_latencies, adjustment_intervals,
+                                 active_bout_intensities, active_bout_counts,
+                                 increase_intensities, increase_latencies, rest_intervals,
+                                 rest_bout_intensities, rest_bout_counts]).T
+
+        features.reset_index(inplace=True)
+        features.rename(columns={'index': 'animal_id'}, inplace=True)
+
+        features.columns = ['animal_id',
+                            'startle_intensity', 'startle_latency', 'adjustment_interval',
+                            'active_bout_intensity', 'active_bout_count',
+                            'increase_intensity', 'increase_latency', 'rest_interval',
+                            'rest_bout_intensity', 'rest_bout_count']
+
+        # sync label and batch from df_batches by animal_id
+        df_label_batch = df_batches[['animal_id', 'label', 'batch']].drop_duplicates()
+        features = pd.merge(features, df_label_batch, on='animal_id', how='left')
 
 
-        # ===== plot startle response after light ON ===========================================
+        # ===== save features to csv file =============================================
+        features.to_csv(f'Processed_data/behaviour_pattern/{fish_type}/{POWER}W_day{day}_features.csv', index=False)
+
+        # ===== save features to csv file =============================================
+
+
