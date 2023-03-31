@@ -54,8 +54,7 @@ def light_intensity_adjustment(data, light_intensities, reference_intensity):
 
 
 def measure_startle_response(data, light_onset, startle_threshold, startle_window,
-                             stabilization_threshold, activity_threshold,
-                             on_window=1800, min_stable_duration=10):
+                             stable_threshold, activity_threshold=0.1, on_window=1800, min_stable_duration=10):
     """
     Detect the startle response and measure the latency for individual animals in the given DataFrame.
 
@@ -70,10 +69,10 @@ def measure_startle_response(data, light_onset, startle_threshold, startle_windo
         The threshold for detecting a startle response, as a percentage of activity.
     startle_window : int
         The time window after the light onset during which the startle response should be detected.
-    stabilization_threshold : float between 0 and 1
+    stable_threshold : float between 0 and 1
         The threshold for determining that the activity has stabilized, as a percentage of activity.
     activity_threshold : float between 0 and 1
-        The threshold for determining that the animal is active, as a percentage of activity.
+        The threshold for determining that the animal is active, as a percentage of activity. default 0.1
     on_window : int
         The time window after the light onset and before next light offset (default 30 minutes)
     min_stable_duration : int
@@ -125,7 +124,7 @@ def measure_startle_response(data, light_onset, startle_threshold, startle_windo
             stabilization_time = None
 
             for _, row in post_startle_data.iterrows():
-                if row['activity_sum'] < stabilization_threshold:
+                if row['activity_sum'] < stable_threshold:
                     stable_count += 1
                 else:
                     stable_count = 0
@@ -143,13 +142,13 @@ def measure_startle_response(data, light_onset, startle_threshold, startle_windo
 
         adjustment_intervals[animal_id] = adjustment_interval
 
-        # ===== active bout after adjustment =======
+        # ===== active bouts after adjustment =======
         if adjustment_interval is not None:
             post_adjustment_data = animal_data[(animal_data['end'] >= light_onset + adjustment_interval) &
                                                (animal_data['end'] < light_onset + on_window)]
 
             bout_count = 0
-            bout_intensity_sum = 0
+            bout_duration_sum = 0
             in_bout = False
 
             for _, row in post_adjustment_data.iterrows():
@@ -157,14 +156,14 @@ def measure_startle_response(data, light_onset, startle_threshold, startle_windo
                     if not in_bout:
                         bout_count += 1
                         in_bout = True
-                    bout_intensity_sum += row['activity_sum']
+                    bout_duration_sum += 1
                 else:
                     in_bout = False
 
             if bout_count > 0:
-                bout_intensity = bout_intensity_sum / bout_count
+                bout_intensity = bout_duration_sum / bout_count
             else:
-                bout_intensity = 0
+                bout_intensity = None
 
         else:
             bout_intensity = None
@@ -176,9 +175,8 @@ def measure_startle_response(data, light_onset, startle_threshold, startle_windo
     return startle_intensities, startle_latencies, adjustment_intervals, bout_intensities, bout_counts
 
 
-def measure_dark_adjustment_metrics(data: pd.DataFrame, light_off: int, activity_threshold: float,
-                                    rest_threshold: float, min_dark_stable_duration: int,
-                                    off_window: int = 1800):
+def measure_dark_adjustment_metrics(data, light_off, activity_threshold=0.1, rest_threshold=0.1,
+                                    min_dark_stable_duration=10, off_window=1800):
     """
     Measure the maximum activity after light off, adjust to dark interval, and rest bout metrics
     (latency, count, and density) after adjustment for individual animals in the given DataFrame.
@@ -191,7 +189,7 @@ def measure_dark_adjustment_metrics(data: pd.DataFrame, light_off: int, activity
     light_off : int
         The time point at which the light is turned off.
     activity_threshold : float
-        The threshold for distinguishing between active and inactive bouts, as a percentage of activity.
+        The threshold for distinguishing between active and inactive bouts, as a percentage of activity. Default 0.1
     rest_threshold : float
         The threshold for determining that the activity has stabilized in the dark, as a percentage of activity.
     min_dark_stable_duration : int
@@ -252,7 +250,7 @@ def measure_dark_adjustment_metrics(data: pd.DataFrame, light_off: int, activity
 
             # Calculate rest bout latency, count, and density
             rest_count = 0
-            rest_density_sum = 0
+            rest_duration_sum = 0
             in_rest_bout = False
 
             for _, row in post_dark_stabilization_data.iterrows():
@@ -262,15 +260,15 @@ def measure_dark_adjustment_metrics(data: pd.DataFrame, light_off: int, activity
                     if not in_rest_bout:
                         in_rest_bout = True
                         rest_count += 1
-                    rest_density_sum += activity
+                    rest_duration_sum += 1
                 else:
                     in_rest_bout = False
 
             if rest_count > 0:
-                rest_density = rest_density_sum / rest_count
+                rest_density = rest_duration_sum / rest_count
             else:
                 rest_count = 0
-                rest_density = 0
+                rest_density = None
 
         else:
             dark_adjustment_interval = None
