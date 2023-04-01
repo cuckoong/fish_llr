@@ -129,7 +129,7 @@ def measure_startle_response(data, light_onset, startle_threshold, startle_windo
             if bout_count > 0:
                 bout_intensity = bout_duration_sum / bout_count
             else:
-                bout_intensity = None
+                bout_intensity = 0
 
         else:
             bout_intensity = None
@@ -232,7 +232,7 @@ def measure_dark_adjustment_metrics(data, light_off, activity_threshold, rest_th
                 rest_density = rest_duration_sum / rest_count
             else:
                 rest_count = 0
-                rest_density = None
+                rest_density = 0
 
         else:
             dark_adjustment_interval = None
