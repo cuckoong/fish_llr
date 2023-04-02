@@ -52,8 +52,10 @@ def measure_startle_response(data, light_onset, startle_threshold, startle_windo
     startle_latencies = {}
     startle_intensities = {}
     adjustment_intervals = {}
-    bout_intensities = {}
-    bout_counts = {}
+    active_bout_intensities = {}
+    active_bout_counts = {}
+    rest_bout_intensities = {}
+    rest_bout_counts = {}
 
     for animal_id, animal_data in data.groupby('animal_id'):
         # Select activity data within the startle window
@@ -113,32 +115,52 @@ def measure_startle_response(data, light_onset, startle_threshold, startle_windo
             post_adjustment_data = animal_data[(animal_data['end'] >= light_onset + adjustment_interval) &
                                                (animal_data['end'] < light_onset + on_window)]
 
-            bout_count = 0
-            bout_duration_sum = 0
-            in_bout = False
+            # count bout for rest and active
+            active_bout_count = 0
+            active_bout_duration_sum = 0
+            in_active_bout = False
+
+            rest_bout_count = 0
+            rest_bout_duration_sum = 0
+            in_rest_bout = False
 
             for _, row in post_adjustment_data.iterrows():
                 if row['activity_sum'] > activity_threshold * row['activity_sum_baseline_std']:
-                    if not in_bout:
-                        bout_count += 1
-                        in_bout = True
-                    bout_duration_sum += 1
+                    if not in_active_bout:
+                        active_bout_count += 1
+                        in_active_bout = True
+                    active_bout_duration_sum += 1
+                    in_rest_bout = False
                 else:
-                    in_bout = False
+                    if not in_rest_bout:
+                        rest_bout_count += 1
+                        in_rest_bout = True
+                    rest_bout_duration_sum += 1
+                    in_active_bout = False
 
-            if bout_count > 0:
-                bout_intensity = bout_duration_sum / bout_count
+            if active_bout_count > 0:
+                active_bout_intensity = active_bout_duration_sum / active_bout_count
             else:
-                bout_intensity = 0
+                active_bout_intensity = 0
+
+            if rest_bout_count > 0:
+                rest_bout_intensity = rest_bout_duration_sum / rest_bout_count
+            else:
+                rest_bout_intensity = 0
 
         else:
-            bout_intensity = None
-            bout_count = None
+            active_bout_intensity = None
+            active_bout_count = None
+            rest_bout_intensity = None
+            rest_bout_count = None
 
-        bout_intensities[animal_id] = bout_intensity
-        bout_counts[animal_id] = bout_count
+        active_bout_intensities[animal_id] = active_bout_intensity
+        active_bout_counts[animal_id] = active_bout_count
+        rest_bout_intensities[animal_id] = rest_bout_intensity
+        rest_bout_counts[animal_id] = rest_bout_count
 
-    return startle_intensities, startle_latencies, adjustment_intervals, bout_intensities, bout_counts
+    return startle_intensities, startle_latencies, adjustment_intervals, active_bout_intensities, active_bout_counts, \
+               rest_bout_intensities, rest_bout_counts
 
 
 def measure_dark_adjustment_metrics(data, light_off, activity_threshold, rest_threshold, min_dark_stable_duration,
@@ -172,11 +194,14 @@ def measure_dark_adjustment_metrics(data, light_off, activity_threshold, rest_th
          rest_latency, rest_count, rest_density). If the activity does not stabilize within the data, the value is
          set to None.
     """
+
     increase_intensities = {}
     increase_latencies = {}
     dark_adjustment_intervals = {}
-    bout_intensities = {}
-    bout_counts = {}
+    rest_bout_intensities = {}
+    rest_bout_counts = {}
+    active_bout_intensities = {}
+    active_bout_counts = {}
 
     for animal_id, animal_data in data.groupby('animal_id'):
         post_light_off_data = animal_data[(animal_data['end'] >= light_off) &
@@ -219,13 +244,22 @@ def measure_dark_adjustment_metrics(data, light_off, activity_threshold, rest_th
             rest_duration_sum = 0
             in_rest_bout = False
 
+            active_count = 0
+            active_duration_sum = 0
+            in_active_bout = False
+
             for _, row in post_dark_stabilization_data.iterrows():
                 if row['activity_sum'] < activity_threshold * row['activity_sum_baseline_std']:
                     if not in_rest_bout:
                         in_rest_bout = True
                         rest_count += 1
                     rest_duration_sum += 1
+                    in_active_bout = False
                 else:
+                    if not in_active_bout:
+                        in_active_bout = True
+                        active_count += 1
+                    active_duration_sum += 1
                     in_rest_bout = False
 
             if rest_count > 0:
@@ -234,13 +268,24 @@ def measure_dark_adjustment_metrics(data, light_off, activity_threshold, rest_th
                 rest_count = 0
                 rest_density = 0
 
+            if active_count > 0:
+                active_density = active_duration_sum / active_count
+            else:
+                active_count = 0
+                active_density = 0
+
         else:
             dark_adjustment_interval = None
             rest_count = None
             rest_density = None
+            active_count = None
+            active_density = None
 
         dark_adjustment_intervals[animal_id] = dark_adjustment_interval
-        bout_counts[animal_id] = rest_count
-        bout_intensities[animal_id] = rest_density
+        rest_bout_counts[animal_id] = rest_count
+        rest_bout_intensities[animal_id] = rest_density
+        active_bout_intensities[animal_id] = active_density
+        active_bout_counts[animal_id] = active_count
 
-    return increase_intensities, increase_latencies, dark_adjustment_intervals, bout_intensities, bout_counts
+    return increase_intensities, increase_latencies, dark_adjustment_intervals, rest_bout_intensities, \
+           rest_bout_counts, active_bout_intensities, active_bout_counts

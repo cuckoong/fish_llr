@@ -1,6 +1,5 @@
 import pandas as pd
 from src.behaviour_features_utils import measure_dark_adjustment_metrics, measure_startle_response
-from src.utils import rm_animal_baseline
 
 
 def test_measure_dark_adjustment_metrics():
@@ -29,15 +28,19 @@ def test_measure_dark_adjustment_metrics():
     min_dark_stable_duration = 1
     off_window = 1800
 
-    increase_intensities, increase_latencies, dark_adjustment_intervals, bout_intensities, bout_counts = \
-        measure_dark_adjustment_metrics(data, light_off, activity_threshold, rest_threshold,
-                                        min_dark_stable_duration, off_window)
+    dark_response = measure_dark_adjustment_metrics(data, light_off, activity_threshold, rest_threshold,
+                                                    min_dark_stable_duration, off_window)
+
+    increase_intensities, increase_latencies, dark_adjustment_intervals, rest_bout_intensities, rest_bout_counts, \
+        active_bout_intensities, active_bout_counts = dark_response
 
     assert increase_intensities == {1: 0.30, 2: 0.3, 3: 0.27, 4: 0.27}
     assert increase_latencies == {1: 3, 2: 4, 3: 3, 4: 3}
     assert dark_adjustment_intervals == {1: 4, 2: None, 3: 4, 4: None}
-    assert bout_intensities == {1: 2, 2: None, 3: 1, 4: None}
-    assert bout_counts == {1: 1, 2: None, 3: 1, 4: None}
+    assert rest_bout_intensities == {1: 2, 2: None, 3: 1, 4: None}
+    assert rest_bout_counts == {1: 1, 2: None, 3: 1, 4: None}
+    assert active_bout_intensities == {1: 0, 2: None, 3: 1, 4: None}
+    assert active_bout_counts == {1: 0, 2: None, 3: 1, 4: None}
 
 
 def test_measure_startle_response():
@@ -72,14 +75,19 @@ def test_measure_startle_response():
     on_window = 1800
     min_stable_duration = 2
 
-    startle_intensities, startle_latencies, adjustment_intervals, bout_intensites, bout_counts = \
-        measure_startle_response(data, light_on, startle_threshold, startle_window, stabilization_threshold,
-                                 activity_threshold, on_window=on_window, min_stable_duration=min_stable_duration)
+    light_response = measure_startle_response(data, light_on, startle_threshold, startle_window,
+                                              stabilization_threshold, activity_threshold, on_window=on_window,
+                                              min_stable_duration=min_stable_duration)
+
+    startle_intensities, startle_latencies, adjustment_intervals, active_bout_intensities, active_bout_counts, \
+     rest_bout_intensities, rest_bout_counts = light_response
 
     assert startle_intensities == {1: 0.8, 2: None, 3: None, 4: 0.6, 5: 0.6}
     assert startle_latencies == {1: 2, 2: None, 3: None, 4: 2, 5: 2}
     assert adjustment_intervals == {1: 3, 2: None, 3: None, 4: 3, 5: 3}
-    assert bout_intensites == {1: 2, 2: None, 3: None, 4: 1, 5: None}
-    assert bout_counts == {1: 1, 2: None, 3: None, 4: 1, 5: 0}
+    assert active_bout_intensities == {1: 2, 2: None, 3: None, 4: 1, 5: 0}
+    assert active_bout_counts == {1: 1, 2: None, 3: None, 4: 1, 5: 0}
+    assert rest_bout_intensities == {1: 1, 2: None, 3: None, 4: 2, 5: 3}
+    assert rest_bout_counts == {1: 1, 2: None, 3: None, 4: 1, 5: 1}
 
     # You can add more test cases with different input data and expected output to cover more scenarios.
