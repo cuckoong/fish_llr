@@ -1,9 +1,11 @@
 import os
-import seaborn as sns
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from scipy.stats import mannwhitneyu, chi2_contingency, fisher_exact
+import seaborn as sns
+from pymer4.models import Lmer
+from scipy.stats import chi2_contingency, fisher_exact
 
 sns.set(style="whitegrid")
 
@@ -36,39 +38,45 @@ def significance_markers(value):
 
 
 def compare_event(df, selected_column):
+    days = df['day'].unique()
     df['event'] = df[selected_column].apply(lambda x: 1 if pd.notna(x) else 0)
 
     # visualize bar chart with label side by side, day as x-axis, and startle percentage as y-axis
     event_summary = df.groupby(['label', 'day'])['event'].agg(['mean', 'sum', 'count']).reset_index()
-
-    # Calculate p-values and add stars to the plot
-    days = event_summary['day'].unique()
     group1_data = event_summary[event_summary['label'] == 'Control']
     group2_data = event_summary[event_summary['label'] == 'EM']
 
+    # Calculate p-values and add stars to the plot
     fig, ax = plt.subplots(1, 1, figsize=(4, 3))
     sns.barplot(x="day", y="mean", hue="label", data=event_summary, ax=ax)
-
     for day in days:
         group1_count = group1_data[group1_data['day'] == day]['sum'].iloc[0]
         group2_count = group2_data[group2_data['day'] == day]['sum'].iloc[0]
         group1_total = group1_data[group1_data['day'] == day]['count'].iloc[0]
         group2_total = group2_data[group2_data['day'] == day]['count'].iloc[0]
-
+        ''''
         contingency_table = [[group1_count, group1_total - group1_count],
                              [group2_count, group2_total - group2_count]]
 
         info, _, p_value = auto_select_test(contingency_table)
         print(f'{selected_column} day {day}: {info} p-value = {p_value:.3f}')
+        '''
+        if pd.unique(df['event']).size == 1:  # all values are the not null
+            print('all values are not null')
+        else:
+            df_subset = df[(df['day'] == day)].copy()
+            model = Lmer("event  ~ label  + (1|batch)", data=df_subset, family='binomial')
+            res = model.fit()
+            p_value = res.loc['labelEM', 'P-val']
 
-        if p_value < 0.05:
-            star_marker = significance_markers(p_value)
-            max_ratio = max(group1_count / group1_total, group2_count / group2_total)
-            ax.text(day - 5, max_ratio + 0.02, star_marker, fontsize=20, horizontalalignment='center')
+            if p_value < 0.05:
+                star_marker = significance_markers(p_value)
+                max_ratio = max(group1_count / group1_total, group2_count / group2_total)
+                ax.text(day - 5, max_ratio + 0.02, star_marker, fontsize=20, horizontalalignment='center')
 
-    plt.title(selected_column.replace('_', ' ').title() + ' Comparison')
+    plt.title(selected_column.replace('_', ' ').title() + f'({fish_type} {power}W)')
     plt.legend(loc='upper left')
-    plt.ylabel('Event Percentage')
+    plt.ylabel('Existing Ratio')
     plt.ylim(0, 1)
     plt.tight_layout()
     plt.savefig(f'Figures/Stats/Quantization/{fish_type}/behaviour_pattern/'
@@ -81,7 +89,7 @@ def compare_value(df, selected_column):
     group2_data = df[df['label'] == 'EM'].copy()
 
     fig, ax = plt.subplots(1, 1, figsize=(4, 4))
-    sns.boxplot(x="day", y=selected_column, hue="label", data=df, ax=ax)
+    sns.boxplot(x="day", y=selected_column, hue="label", data=df, ax=ax, notch=True, showfliers=False)
 
     for day in days:
         # compare values between labels
@@ -90,25 +98,42 @@ def compare_value(df, selected_column):
 
         if len(group1_value) == 0 or len(group2_value) == 0:
             continue
+        elif group1_value.unique().size == 1 and group2_value.unique().size == 1:
+            print('all values are the same')
+            continue
         else:
-            _, p_value = mannwhitneyu(group1_value, group2_value)
+            df_subset = df[(df['day'] == day)].dropna(subset=[selected_column]).copy()
+            formula = f"{selected_column} ~ label + (1|batch)"
+
+            if 'count' in selected_column:
+                family = 'poisson'
+            else:
+                family = 'gaussian'
+
+            model = Lmer(formula, data=df_subset, family=family)
+            result = model.fit(maxiter=100000)
+            p_value = result.loc['labelEM', 'P-val']
             print(f'{selected_column} day {day}: p-value = {p_value:.3f}')
 
-        if p_value < 0.05:
-            star_marker = significance_markers(p_value)
-            max_ratio = max(group1_value.mean(), group2_value.mean())
-            ax.text(day - 5, max_ratio + 0.02, star_marker, fontsize=20, horizontalalignment='center')
+            res = model.fit()
+            p_value = res.loc['labelEM', 'P-val']
+
+            if p_value < 0.05:
+                star_marker = significance_markers(p_value)
+                max_ratio = max(group1_value.max(), group2_value.max())
+                ax.text(day - 5, max_ratio + 0.02, star_marker, fontsize=20, horizontalalignment='center')
 
     plt.title(selected_column.replace('_', ' ').title() + ' Comparison')
     plt.legend(loc='upper left')
     plt.ylabel('')
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.savefig(f'Figures/Stats/Quantization/{fish_type}/behaviour_pattern/'
                 f'{power}W_{selected_column}_comparison_value.png', dpi=300)
 
 
 if __name__ == '__main__':
     os.chdir('/Users/panpan/PycharmProjects/old_project/fish_llr')
+
     fish_type = 'Tg'
     powers = [1, 1.2]
     for power in powers:
@@ -117,15 +142,20 @@ if __name__ == '__main__':
 
         # ====== comparing none vs not none between labels ==================================
         compare_event(features, selected_column='startle_latency')
-        compare_event(features, selected_column='adjustment_interval')
-        compare_event(features, selected_column='active_bout_intensity')
-        compare_event(features, selected_column='rest_interval')
-        compare_event(features, selected_column='rest_bout_intensity')
+        compare_event(features, selected_column='light_adjustment_intervals')
+        compare_event(features, selected_column='dark_adjustment_intervals')
 
         # ====== comparing values between labels ==================================
-        compare_value(features, selected_column='adjustment_interval')
-        compare_value(features, selected_column='rest_bout_intensity')
-        compare_value(features, selected_column='rest_bout_count')
-        compare_value(features, selected_column='active_bout_intensity')
-        compare_value(features, selected_column='active_bout_count')
+        compare_value(features, selected_column='light_adjustment_intervals')
+        compare_value(features, selected_column='light_rest_bout_intensity')
+        compare_value(features, selected_column='light_rest_bout_count')
+        compare_value(features, selected_column='light_active_bout_intensity')
+        compare_value(features, selected_column='light_active_bout_count')
+        compare_value(features, selected_column='dark_adjustment_intervals')
+        compare_value(features, selected_column='dark_rest_bout_intensity')
+        compare_value(features, selected_column='dark_rest_bout_count')
+        compare_value(features, selected_column='dark_active_bout_intensity')
+        compare_value(features, selected_column='dark_active_bout_count')
+        compare_value(features, selected_column='increase_intensity')
+        compare_value(features, selected_column='startle_intensity')
         compare_value(features, selected_column='startle_latency')
