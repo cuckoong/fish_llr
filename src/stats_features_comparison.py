@@ -75,9 +75,10 @@ def compare_event(df, selected_column):
                 ax.text(day - 5, max_ratio + 0.02, star_marker, fontsize=20, horizontalalignment='center')
 
     plt.title(selected_column.replace('_', ' ').title() + f'({fish_type} {power}W)')
-    plt.legend(loc='upper left')
     plt.ylabel('Existing Ratio')
     plt.ylim(0, 1)
+    # legend outside the plot
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
     plt.tight_layout()
     plt.savefig(f'Figures/Stats/Quantization/{fish_type}/behaviour_pattern/'
                 f'{power}W_{selected_column}_comparison_event.png', dpi=300)
@@ -87,6 +88,13 @@ def compare_value(df, selected_column):
     days = df['day'].unique()
     group1_data = df[df['label'] == 'Control'].copy()
     group2_data = df[df['label'] == 'EM'].copy()
+
+    # Calculate the maximum value in the selected column and add some extra space for the stars visualization
+    # 90% quantile
+    star_y = df[selected_column].median()
+    # min_value = df[selected_column].min()
+    # upper_limit = max_value + 10
+    # lower_limit = min_value - 10
 
     fig, ax = plt.subplots(1, 1, figsize=(4, 4))
     sns.boxplot(x="day", y=selected_column, hue="label", data=df, ax=ax, notch=True, showfliers=False)
@@ -120,13 +128,15 @@ def compare_value(df, selected_column):
 
             if p_value < 0.05:
                 star_marker = significance_markers(p_value)
-                max_ratio = max(group1_value.max(), group2_value.max())
-                ax.text(day - 5, max_ratio + 0.02, star_marker, fontsize=20, horizontalalignment='center')
+                ax.text(day - 5, star_y, star_marker, fontsize=20, horizontalalignment='center', color='red')
 
     plt.title(selected_column.replace('_', ' ').title() + ' Comparison')
-    plt.legend(loc='upper left')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
     plt.ylabel('')
-    # plt.tight_layout()
+
+    # y limits
+    # plt.ylim(lower_limit, upper_limit)
+    plt.tight_layout()
     plt.savefig(f'Figures/Stats/Quantization/{fish_type}/behaviour_pattern/'
                 f'{power}W_{selected_column}_comparison_value.png', dpi=300)
 
