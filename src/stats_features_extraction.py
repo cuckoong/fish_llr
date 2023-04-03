@@ -1,8 +1,11 @@
 import os
+import pandas as pd
 import seaborn as sns
 from utils import group_batch_data
 from utils import rm_animal_baseline
-from behaviour_features_utils import *
+from behaviour_features_utils import add_baseline
+from behaviour_features_utils import measure_startle_response
+from behaviour_features_utils import measure_dark_adjustment_metrics
 
 sns.set_style('whitegrid')
 sns.set_context('paper')
@@ -13,16 +16,15 @@ os.chdir('/Users/panpan/PycharmProjects/old_project/fish_llr')
 
 def get_compare_group(power_level):
     if power_level == 0:  # 0W/Kg vertical, wt
-        groups = ['Control', '0W/Kg SAR']
+        return ['Control', '0W/Kg SAR']
     elif power_level == 1:  # 1.6W/Kg vertical, tg
-        groups = ['control', '1.6W/Kg SAR']
+        return ['control', '1.6W/Kg SAR']
     elif power_level == 1.2:  # 2W/Kg vertical, wt+tg
-        groups = ['Control', '2W/Kg SAR']
+        return ['Control', '2W/Kg SAR']
     elif power_level == 3:  # 4.9W/Kg vertical, wt
-        groups = ['Control', '4.9W/Kg SAR']
+        return ['Control', '4.9W/Kg SAR']
     elif power_level == 5:  # horizontal, wt
-        groups = ['Control', '0.009W/Kg SAR']
-    return groups
+        return ['Control', '0.009W/Kg SAR']
 
 
 if __name__ == '__main__':
@@ -33,7 +35,6 @@ if __name__ == '__main__':
     days = [5, 6, 7, 8]
     ON_OFF_DURATION = 1800
     PRE_DURATION = 600
-    POST_DURATION = 1770
 
     for POWER in POWERS:
         # '''
@@ -69,10 +70,15 @@ if __name__ == '__main__':
 
             # ===== startle response after light ON ================================================
             # metrics: startle response (latency and maximum), and adjust to light interval
-            light_response = measure_startle_response(df_batches, on_off[0], startle_threshold=3, startle_window=3,
-                                                      stable_threshold=3, activity_threshold=2,
-                                                      on_window=ON_OFF_DURATION,
-                                                      min_stable_duration=2)
+            df_active_mean, df_active_std = add_baseline(df_batches, (on_off[0] - PRE_DURATION - 1, on_off[0] - 1))
+            df_batches = pd.merge(df_batches, df_active_mean, on='animal_id', how='left',
+                                  suffixes=('', '_active_baseline_mean'))
+            df_batches = pd.merge(df_batches, df_active_std, on='animal_id', how='left',
+                                  suffixes=('', '_active_baseline_std'))
+
+            light_response = measure_startle_response(df_batches, off_on[0], startle_threshold=3, startle_window=3,
+                                                      stable_threshold=2, activity_threshold=3,
+                                                      on_window=ON_OFF_DURATION, min_stable_duration=3)
 
             startle_intensities, startle_latencies, light_adjustment_intervals, light_active_bout_intensities, \
             light_active_bout_counts, light_rest_bout_intensities, light_rest_bout_counts = light_response
@@ -80,8 +86,14 @@ if __name__ == '__main__':
             # ===== dark response after light OFF ===============================================
             # metrics: brief increase of activity after light off (maximum), and adjust to dark interval
             # metrics (2): rest bouts (latency, duration, and intensity)
-            dark_response = measure_dark_adjustment_metrics(df_batches, off_on[0], activity_threshold=3,
-                                                            rest_threshold=3, min_dark_stable_duration=2,
+            df_rest_mean, df_rest_std = add_baseline(df_batches, (off_on[1] - PRE_DURATION - 1, off_on[1] - 1))
+            df_batches = pd.merge(df_batches, df_rest_mean, on='animal_id', how='left',
+                                  suffixes=('', '_rest_baseline_mean'))
+            df_batches = pd.merge(df_batches, df_rest_std, on='animal_id', how='left',
+                                  suffixes=('', '_rest_baseline_std'))
+
+            dark_response = measure_dark_adjustment_metrics(df_batches, on_off[0], stable_threshold=2,
+                                                            activity_threshold=3, min_dark_stable_duration=3,
                                                             off_window=ON_OFF_DURATION)
 
             increase_intensities, increase_latencies, dark_adjustment_intervals, dark_rest_bout_intensities, \
