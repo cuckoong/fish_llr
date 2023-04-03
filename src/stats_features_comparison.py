@@ -85,19 +85,26 @@ def compare_event(df, selected_column):
 
 
 def compare_value(df, selected_column):
+    df = df.copy()
+
+    # unique days
     days = df['day'].unique()
     group1_data = df[df['label'] == 'Control'].copy()
     group2_data = df[df['label'] == 'EM'].copy()
 
-    # Calculate the maximum value in the selected column and add some extra space for the stars visualization
-    # 90% quantile
-    star_y = df[selected_column].median()
-    # min_value = df[selected_column].min()
-    # upper_limit = max_value + 10
-    # lower_limit = min_value - 10
+    #  ========== value minus control mean and divide by control std ===========================
+    group1_data_mean = group1_data.groupby(['batch', 'day'])[selected_column].mean().reset_index()
+    group1_data_std = group1_data.groupby(['batch', 'day'])[selected_column].std().reset_index()
 
+    df = df.merge(group1_data_mean, on=['batch', 'day'], how='left', suffixes=('', '_mean'))
+    df = df.merge(group1_data_std, on=['batch', 'day'], how='left', suffixes=('', '_std'))
+
+    df['selected_value'] = (df[selected_column] - df[selected_column + '_mean']) / df[selected_column + '_std']
+    star_y = df['selected_value'].median()
+
+    #  ========== visualize and statistical analysis ===========================
     fig, ax = plt.subplots(1, 1, figsize=(4, 4))
-    sns.boxplot(x="day", y=selected_column, hue="label", data=df, ax=ax, notch=True, showfliers=False)
+    sns.boxplot(x="day", y='selected_value', hue="label", data=df, ax=ax, notch=True)
 
     for day in days:
         # compare values between labels
@@ -151,9 +158,11 @@ if __name__ == '__main__':
         features['label'] = features['label'].apply(lambda x: 'Control' if x == 0 else 'EM')
 
         # ====== comparing none vs not none between labels ==================================
+        '''
         compare_event(features, selected_column='startle_latency')
         compare_event(features, selected_column='light_adjustment_intervals')
         compare_event(features, selected_column='dark_adjustment_intervals')
+        '''
 
         # ====== comparing values between labels ==================================
         compare_value(features, selected_column='light_adjustment_intervals')

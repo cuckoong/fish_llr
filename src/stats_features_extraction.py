@@ -14,19 +14,6 @@ sns.set_palette('Set2')
 os.chdir('/Users/panpan/PycharmProjects/old_project/fish_llr')
 
 
-def get_compare_group(power_level):
-    if power_level == 0:  # 0W/Kg vertical, wt
-        return ['Control', '0W/Kg SAR']
-    elif power_level == 1:  # 1.6W/Kg vertical, tg
-        return ['control', '1.6W/Kg SAR']
-    elif power_level == 1.2:  # 2W/Kg vertical, wt+tg
-        return ['Control', '2W/Kg SAR']
-    elif power_level == 3:  # 4.9W/Kg vertical, wt
-        return ['Control', '4.9W/Kg SAR']
-    elif power_level == 5:  # horizontal, wt
-        return ['Control', '0.009W/Kg SAR']
-
-
 if __name__ == '__main__':
     ACTIVITY_TYPE = 'burdur'
     fish_type = 'Tg'
@@ -77,11 +64,12 @@ if __name__ == '__main__':
                                   suffixes=('', '_active_baseline_std'))
 
             light_response = measure_startle_response(df_batches, off_on[0], startle_threshold=3, startle_window=3,
-                                                      stable_threshold=2, activity_threshold=3,
-                                                      on_window=ON_OFF_DURATION, min_stable_duration=3)
+                                                      stable_threshold=3, activity_threshold=1,
+                                                      on_window=ON_OFF_DURATION, min_stable_duration=3,
+                                                      min_bout_duration=3)
 
             startle_intensities, startle_latencies, light_adjustment_intervals, light_active_bout_intensities, \
-            light_active_bout_counts, light_rest_bout_intensities, light_rest_bout_counts = light_response
+                light_active_bout_counts, light_rest_bout_intensities, light_rest_bout_counts = light_response
 
             # ===== dark response after light OFF ===============================================
             # metrics: brief increase of activity after light off (maximum), and adjust to dark interval
@@ -92,12 +80,12 @@ if __name__ == '__main__':
             df_batches = pd.merge(df_batches, df_rest_std, on='animal_id', how='left',
                                   suffixes=('', '_rest_baseline_std'))
 
-            dark_response = measure_dark_adjustment_metrics(df_batches, on_off[0], stable_threshold=2,
-                                                            activity_threshold=3, min_dark_stable_duration=3,
-                                                            off_window=ON_OFF_DURATION)
+            dark_response = measure_dark_adjustment_metrics(df_batches, on_off[0], stable_threshold=3,
+                                                            activity_threshold=1, min_dark_stable_duration=3,
+                                                            off_window=ON_OFF_DURATION, min_bout_duration=3)
 
             increase_intensities, increase_latencies, dark_adjustment_intervals, dark_rest_bout_intensities, \
-            dark_rest_bout_counts, dark_active_bout_intensities, dark_active_bout_counts = dark_response
+                dark_rest_bout_counts, dark_active_bout_intensities, dark_active_bout_counts = dark_response
 
             # ===== Get features from feature dicts =============================================
             features = pd.DataFrame([startle_intensities, startle_latencies, light_adjustment_intervals,

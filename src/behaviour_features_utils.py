@@ -17,8 +17,58 @@ def add_baseline(df, time_interval):
     return df_baseline_mean, df_baseline_std
 
 
-def moving_average(data, window_size):
-    return data['activity_sum'].rolling(window=window_size, min_periods=1).mean()
+def moving_average(df, window_size):
+    # data sorted by end
+    data = df.copy()
+    data.sort_values(by='end', inplace=True, ascending=True)
+    data['activity_sum_smooth'] = data['activity_sum'].rolling(window=window_size, min_periods=1).mean()
+    return data
+
+
+def detect_startle(activity_data, startle_threshold, light_onset):
+    startle_time_list = activity_data[activity_data['activity_sum'] >
+                                      activity_data['activity_sum_baseline_std'] * startle_threshold]['end']
+
+    if len(startle_time_list) > 0:
+        startle_time = startle_time_list.min()
+        startle_latency = startle_time - light_onset
+        startle_intensity = activity_data['activity_sum'].max()
+    else:
+        startle_time = None
+        startle_latency = None
+        startle_intensity = None
+
+    return startle_time, startle_latency, startle_intensity
+
+
+def detect_stable(activity_data, stable_threshold, min_stable_duration, onset_time, resting):
+    stable_count = 0
+    stabilization_time = None
+
+    if resting:
+        baseline_mean_name = 'activity_sum_rest_baseline_mean'
+        baseline_std_name = 'activity_sum_rest_baseline_std'
+    else:
+        baseline_mean_name = 'activity_sum_active_baseline_mean'
+        baseline_std_name = 'activity_sum_active_baseline_std'
+
+    for _, row in activity_data.iterrows():
+        if abs(row['activity_sum_smooth'] - row[baseline_mean_name]) <= \
+                (stable_threshold * row[baseline_std_name]):
+            stable_count += 1
+        else:
+            stable_count = 0
+
+        if stable_count >= min_stable_duration:
+            stabilization_time = row['end'] - min_stable_duration + 1
+            break
+
+    if stabilization_time is not None:
+        adjustment_interval = stabilization_time - onset_time
+    else:
+        adjustment_interval = None
+
+    return adjustment_interval
 
 
 def identify_bouts(activity_data, activity_threshold_lower=-np.inf, activity_threshold_upper=np.inf, min_duration=2):
@@ -93,84 +143,46 @@ def measure_startle_response(data, light_onset, startle_threshold, startle_windo
         startle_data = animal_data[(animal_data['end'] >= light_onset) &
                                    (animal_data['end'] < light_onset + startle_window)].copy()
 
-        # ===== startle latency =======
+        # ===== startle latency =======================
         # Find the first time point where the activity percentage exceeds the threshold
-        startle_time_list = startle_data[startle_data['activity_sum'] >
-                                         startle_data['activity_sum_baseline_std'] *
-                                         startle_threshold]['end']
-
-        if len(startle_time_list) > 0:
-            startle_time = startle_time_list.min()
-            startle_latency = startle_time - light_onset
-            startle_intensity = startle_data['activity_sum'].max()
-        else:
-            startle_time = None
-            startle_latency = None
-            startle_intensity = None
-
+        startle_time, startle_latency, startle_intensity = detect_startle(startle_data, startle_threshold, light_onset)
         startle_latencies[animal_id] = startle_latency
-        # Find maximum activity within the startle window
         startle_intensities[animal_id] = startle_intensity
 
         # ===== startle transition to adjustment =======
         # Find the transition interval after startle and before the activity stabilizes
-        if startle_time is not None:
+        if startle_time is None:
+            adjustment_interval = None
+        else:
             # smooth activity data after startle
             # Find the time when the activity stabilizes
             post_startle_data = animal_data[(animal_data['end'] > startle_time) &
                                             (animal_data['end'] < light_onset + on_window)].copy()
 
             # smooth activity data with moving average over 3s window
-            post_startle_data['activity_sum_smooth'] = moving_average(post_startle_data, smooth_win_size)
-
-            stable_count = 0
-            stabilization_time = None
-
-            for _, row in post_startle_data.iterrows():
-                if abs(row['activity_sum_smooth'] - row['activity_sum_active_baseline_mean']) <= \
-                        (stable_threshold * row['activity_sum_active_baseline_std']):
-                    stable_count += 1
-                else:
-                    stable_count = 0
-
-                if stable_count >= min_stable_duration:
-                    stabilization_time = row['end'] - min_stable_duration + 1
-                    break
-
-            if stabilization_time is not None:
-                adjustment_interval = stabilization_time - light_onset
-            else:
-                adjustment_interval = None
-        else:
-            adjustment_interval = None
-
+            post_startle_data = moving_average(post_startle_data, smooth_win_size)
+            adjustment_interval = detect_stable(post_startle_data, stable_threshold, min_stable_duration, light_onset,
+                                                resting=False)
         adjustment_intervals[animal_id] = adjustment_interval
 
         # ===== active bouts after adjustment =======
-        if adjustment_interval is not None:
-            post_adjustment_data = animal_data[(animal_data['end'] >= light_onset + adjustment_interval) &
-                                               (animal_data['end'] < light_onset + on_window)].copy()
+        post_light_data = animal_data[(animal_data['end'] >= light_onset) &
+                                      (animal_data['end'] < light_onset + on_window)].copy()
 
-            # smooth activity data with moving average over 3s window
-            post_adjustment_data['activity_sum_smooth'] = post_adjustment_data['activity_sum']. \
-                rolling(window=smooth_win_size, min_periods=1).mean()
+        # smooth activity data with moving average over 3s window
+        post_light_data = moving_average(post_light_data, smooth_win_size)
 
-            activity_std = post_adjustment_data['activity_sum_active_baseline_std'].unique()[0]
-            activity_mean = post_adjustment_data['activity_sum_active_baseline_mean'].unique()[0]
+        activity_std = post_light_data['activity_sum_active_baseline_std'].unique()[0]
+        activity_mean = post_light_data['activity_sum_active_baseline_mean'].unique()[0]
 
-            active_bout_intensity, active_bout_count = identify_bouts(
-                post_adjustment_data,
-                activity_threshold_lower=activity_mean - activity_threshold * activity_std,
-                min_duration=min_bout_duration)
-            rest_bout_intensity, rest_bout_count = identify_bouts(
-                post_adjustment_data,
-                activity_threshold_upper=activity_mean - activity_threshold * activity_std,
-                min_duration=min_bout_duration)
-        else:
-            active_bout_intensity = None
-            active_bout_count = None
-            rest_bout_intensity = None
-            rest_bout_count = None
+        active_bout_intensity, active_bout_count = identify_bouts(
+            post_light_data,
+            activity_threshold_lower=activity_mean + activity_threshold * activity_std,
+            min_duration=min_bout_duration)
+        rest_bout_intensity, rest_bout_count = identify_bouts(
+            post_light_data,
+            activity_threshold_upper=activity_mean - activity_threshold * activity_std,
+            min_duration=min_bout_duration)
 
         active_bout_intensities[animal_id] = active_bout_intensity
         active_bout_counts[animal_id] = active_bout_count
@@ -238,100 +250,37 @@ def measure_dark_adjustment_metrics(data, light_off, stable_threshold, activity_
         # ======== dark adjustment interval =========
         # Find the transition interval after maximum activity and before the next light onset
         post_increase_data = post_light_off_data[
-            (post_light_off_data['end'] >= increase_latency_time) &
+            (post_light_off_data['end'] > increase_latency_time) &
             (post_light_off_data['end'] < light_off + off_window)].copy()
+        post_increase_data = moving_average(post_increase_data, smooth_win_size)
+        dark_adjustment_interval = detect_stable(post_increase_data, stable_threshold, min_dark_stable_duration,
+                                                 light_off, resting=True)
+        dark_adjustment_intervals[animal_id] = dark_adjustment_interval
 
         # ========= rest bout ===================================
         # Find the time when the activity stabilizes in the dark
-        stable_count = 0
-        dark_stabilization_time = None
+        # smooth the activity data
+        post_dark_data = post_light_off_data[(post_light_off_data['end'] >= light_off) &
+                                             (post_light_off_data['end'] < light_off + off_window)].copy()
 
         # smooth the activity data
-        post_increase_data['activity_sum_smooth'] = post_increase_data['activity_sum'].rolling(
-            window=smooth_win_size, min_periods=1).mean()
+        post_dark_data = moving_average(post_dark_data, smooth_win_size)
+        activity_std = post_dark_data['activity_sum_rest_baseline_std'].unique()[0]
+        activity_mean = post_dark_data['activity_sum_rest_baseline_mean'].unique()[0]
 
-        for _, row in post_increase_data.iterrows():
-            # within 2sd of the mean
-            if abs(row['activity_sum_smooth'] - row['activity_sum_rest_baseline_mean']) <= \
-                    (stable_threshold * row['activity_sum_rest_baseline_std']):
-                stable_count += 1
-            else:
-                stable_count = 0
+        rest_density, rest_count = identify_bouts(
+            post_dark_data,
+            activity_threshold_upper=activity_mean - activity_threshold * activity_std,
+            min_duration=min_bout_duration)
+        active_density, active_count = identify_bouts(
+            post_dark_data,
+            activity_threshold_lower=activity_mean + activity_threshold * activity_std,
+            min_duration=min_bout_duration)
 
-            if stable_count >= min_dark_stable_duration:
-                dark_stabilization_time = row['end'] - min_dark_stable_duration + 1
-                break
-
-        if dark_stabilization_time is not None:
-            dark_adjustment_interval = dark_stabilization_time - light_off
-            post_dark_stabilization_data = post_light_off_data[(post_light_off_data['end'] >= dark_stabilization_time) &
-                                                               (post_light_off_data[
-                                                                    'end'] < light_off + off_window)].copy()
-
-            # smooth the activity data
-            post_dark_stabilization_data['activity_sum_smoothed'] = \
-                post_dark_stabilization_data['activity_sum'].rolling(window=smooth_win_size, min_periods=1).mean()
-
-            activity_std = post_dark_stabilization_data['activity_sum_rest_baseline_std'].unique()[0]
-            activity_mean = post_dark_stabilization_data['activity_sum_rest_baseline_mean'].unique()[0]
-
-            rest_density, rest_count = identify_bouts(
-                post_dark_stabilization_data,
-                activity_threshold_upper=activity_mean + activity_threshold * activity_std,
-                min_duration=min_bout_duration)
-            active_density, active_count = identify_bouts(
-                post_dark_stabilization_data,
-                activity_threshold_lower=activity_mean + activity_threshold * activity_std,
-                min_duration=min_bout_duration)
-
-            # # Calculate rest bout latency, count, and density
-            # rest_count = 0
-            # rest_duration_sum = 0
-            # in_rest_bout = False
-            #
-            # active_count = 0
-            # active_duration_sum = 0
-            # in_active_bout = False
-            #
-            # for _, row in post_dark_stabilization_data.iterrows():
-            #     if (row['activity_sum_smoothed'] - row['activity_sum_rest_baseline_mean']) <= \
-            #             activity_threshold * row['activity_sum_rest_baseline_std']:
-            #         if not in_rest_bout:
-            #             in_rest_bout = True
-            #             rest_count += 1
-            #         rest_duration_sum += 1
-            #         in_active_bout = False
-            #     else:
-            #         if not in_active_bout:
-            #             in_active_bout = True
-            #             active_count += 1
-            #         active_duration_sum += 1
-            #         in_rest_bout = False
-            #
-            # if rest_count > 0:
-            #     rest_density = rest_duration_sum / rest_count
-            # else:
-            #     rest_count = 0
-            #     rest_density = 0
-            #
-            # if active_count > 0:
-            #     active_density = active_duration_sum / active_count
-            # else:
-            #     active_count = 0
-            #     active_density = 0
-
-        else:
-            dark_adjustment_interval = None
-            rest_count = None
-            rest_density = None
-            active_count = None
-            active_density = None
-
-        dark_adjustment_intervals[animal_id] = dark_adjustment_interval
         rest_bout_counts[animal_id] = rest_count
         rest_bout_intensities[animal_id] = rest_density
         active_bout_intensities[animal_id] = active_density
         active_bout_counts[animal_id] = active_count
 
     return increase_intensities, increase_latencies, dark_adjustment_intervals, rest_bout_intensities, \
-           rest_bout_counts, active_bout_intensities, active_bout_counts
+        rest_bout_counts, active_bout_intensities, active_bout_counts
