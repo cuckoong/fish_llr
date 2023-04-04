@@ -89,16 +89,33 @@ on 7 dpf; and a lower rest bout count on 5 dpf; and a smaller rest bout mean dur
 
 ### Summary
 * Conclusion (1) : Response to sudden light ON is not affected by EM radiation
-* Conclusion (2) : Adaptation time after light ON is not affected by EM radiation
-* Conclusion (3) : Active Bout counts and Active Bout mean duration after light ON is not affected by EM radiation
+* Conclusion (2) : 
+   1) After startle response, the high level EM group (SAR=2W/kg) adapts slower on 5dpf and faster on 6dpf than the control group.
+   2) Low EM radiation (SAR=1.6W/kg) has a faster adaptation time than control on 6dpf. 
+   3) Similar adaptation time between control and EM radiation on 7dpf and 8dpf.
+
+* Conclusion (3) : 
+   1) Both low and high EM radiation groups have a higher active bout count than the control group on 6dpf and 7dpf.
+   2) Both low and high EM radiation groups have a smaller active bout mean duration than the control group on 6dpf.
+   3) Both low and high EM radiation groups have a lower rest bout count than the control group on 6dpf.
+   4) Both low and high EM radiation groups have a smaller rest bout mean duration than the control group on 6dpf.
+   5) Differences between low and high EM radiation groups are gradually reduced on 7dpf, and almost disappeared on 8dpf. 
+   6) Higher rest bout count and lower rest bout mean duration were found in the high EM radiation group on 5 dpf,
+<br> but the active bout count and active bout mean duration were not significantly different from the control group. 
+<br> Frequent rest bout and shorter rest bout duration may also indicate increased vigilance or alertness.
+
 * Conclusion (4) : Adaptation time after light off is not affected by EM radiation
-* Conclusion (5) : Active Bout counts and Active Bout mean duration after light off is not affected by EM radiation
-* Conclusion (6) : Rest Bout counts and rest Bout mean duration after light off is not affected by EM radiation
+
+* Conclusion (5) : 
+   1) For high level EM radiation, active bout count, active bout mean duration, rest bout count, <br> 
+and rest bout mean duration are not affected by EM radiation. 
+   2) However, the low level EM radiation group has a higher active bout count and a smaller active bout mean duration <br>
+on 7 dpf; and a lower rest bout count on 5 dpf; and a smaller rest bout mean duration on 5 dpf and 7 dpf.
+   3) The changes of active/rest bout and active/rest bout mean duration are not significant on 8 dpf for both low  <br> and high EM radiation groups.
 
 ### Discussion
-* Similar startle response and adaptation time after light ON means the zebrafish do not show vision impairment after 
+* Similar startle response after light ON means the zebrafish do not show vision impairment after 
 exposure to EM radiation;
-* But higher active bout counts and active bout mean duration after light ON could mean alert and higher anxiety and 
-less rest bout counts and rest bout mean duration after light OFF could mean alert and higher anxiety;
+* Active/rest bout pattern after light ON implies higher vigilance and higher anxiety; 
 * Most of the activities differences were in the 5-6 dpf, and the differences were not significant in the 7-8 dpf, 
 which means the zebrafish can either adapt to the environment or recover from the exposure of EM radiation.
