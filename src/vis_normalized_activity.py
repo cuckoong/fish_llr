@@ -17,6 +17,7 @@ if __name__ == '__main__':
     BATCHES = [1, 2, 'all']
 
     for POWER in POWERS:
+        power_sar = '1.6W/kg' if POWER == 1 else '2W/kg'
         for day in days:
             # ===== load data and group by animal_id =============================================
             df_batches = group_batch_data(fish_type, ACTIVITY_TYPE, POWER, batches, day)
@@ -38,11 +39,13 @@ if __name__ == '__main__':
 
                 df_batches_min = df_batches.groupby(['label', 'animal_id', 'end_min']). \
                     agg({'activity_sum': 'sum'}).reset_index()
+                df_batches_min['label_name'] = df['label'].apply(lambda x: 'EM' if x == 1 else 'Ctrl')
 
                 # visualize median and iqr
                 plt.figure()
-                sns.lineplot(x='end_min', y='activity_sum', hue='label', data=df_batches_min)
-                plt.title(f'{fish_type} {POWER}W {day} day')
+                sns.lineplot(x='end_min', y='activity_sum', hue='label_name', data=df_batches_min)
+                plt.title(f'SAR={power_sar}W {day} day')
+                plt.legend(title=None, loc='upper left')
                 plt.xlabel('Time (min)')
                 plt.ylabel('Busrt seconds (with Baseline Correction)')
 
