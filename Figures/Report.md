@@ -57,9 +57,9 @@ ON -> OFF
 4. Both low and high EM radiation groups have a lower rest bout count than the control group on 6dpf.
 5. Both low and high EM radiation groups have a smaller rest bout mean duration than the control group on 6dpf.
 6. Lower rest bout count and smaller rest bout mean duration indicates that the fish may have
-* increased arousal or alertness, the zebrafish may be more alert or responsive to its environment, 
-leading to fewer and shorter rest bouts;
-* experienced stress or anxiety; fish may be unable to relax or find a sense of safety in its environment.
+   1) increased arousal or alertness, the zebrafish may be more alert or responsive to its environment, 
+   leading to fewer and shorter rest bouts;
+   2) experienced stress or anxiety; fish may be unable to relax or find a sense of safety in its environment.
 
 7. Differences between low and high EM radiation groups are gradually reduced on 7dpf, and almost disappeared on 8dpf. 
 8. Higher rest bout count and lower rest bout mean duration were found in the high EM radiation group on 5 dpf,
@@ -75,12 +75,17 @@ leading to fewer and shorter rest bouts;
 * Conclusion (4) : Adaptation time after light off is not affected by EM radiation
 
 
-### 2.4. Active Bout counts, Active Bout mean duration, Rest Bout counts, and Rest Bout mean duration after light ON
-| <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_active_bout_count_comparison_value.png"  width="400" height="300"> |  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_active_bout_intensity_comparison_value.png"  width="400" height="300">  | <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_rest_bout_count_comparison_value.png"  width="400" height="300"> |  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_rest_bout_intensity_comparison_value.png"  width="400" height="300">  |
-|:----------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------:|
-| <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_active_bout_count_comparison_value.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_dark_active_bout_intensity_comparison_value.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_rest_bout_count_comparison_value.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_dark_rest_bout_intensity_comparison_value.png"  width="400" height="300"> |
-* Conclusion (5) : Active Bout counts and Active Bout mean duration after light off is not affected by EM radiation
+### 2.4. Active Bout counts, Active Bout mean duration, Rest Bout counts, and Rest Bout mean duration after light off
+|  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_active_bout_count_comparison_value.png"  width="400" height="300">  |  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_active_bout_intensity_comparison_value.png"  width="400" height="300">  |  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_rest_bout_count_comparison_value.png"  width="400" height="300">  |  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_rest_bout_intensity_comparison_value.png"  width="400" height="300">  |
+|:------------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------:|
+| <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_dark_active_bout_count_comparison_value.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_dark_active_bout_intensity_comparison_value.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_dark_rest_bout_count_comparison_value.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_dark_rest_bout_intensity_comparison_value.png"  width="400" height="300"> |
 
+* Conclusion (5) : 
+1. For high level EM radiation, active bout count, active bout mean duration, rest bout count, <br> 
+and rest bout mean duration are not affected by EM radiation. 
+2. However, the low level EM radiation group has a higher active bout count and a smaller active bout mean duration <br>
+on 7 dpf; and a lower rest bout count on 5 dpf; and a smaller rest bout mean duration on 5 dpf and 7 dpf.
+3. The changes of active/rest bout and active/rest bout mean duration are not significant on 8 dpf for both low  <br> and high EM radiation groups.
 
 ### Summary
 * Conclusion (1) : Response to sudden light ON is not affected by EM radiation
