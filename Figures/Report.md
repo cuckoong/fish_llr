@@ -21,16 +21,23 @@ ON -> OFF
 
 ## 2. Behaviour Analysis
 ### 2.1. Overall behaviour pattern for low and high levels of EM radiation
-|   ![Image 2.1a](activity_per_min/Tg/1W_5day_allbatch_min.png)   |  ![Image 2.1a](activity_per_min/Tg/1W_6day_allbatch_min.png)   |  ![Image 2.1a](activity_per_min/Tg/1W_7day_allbatch_min.png)   |  ![Image 2.1a](activity_per_min/Tg/1W_8day_allbatch_min.png)   |
-|:---------------------------------------------------------------:|:--------------------------------------------------------------:|:--------------------------------------------------------------:|:--------------------------------------------------------------:|
-|  ![Image 2.1a](activity_per_min/Tg/1.2W_5day_allbatch_min.png)  | ![Image 2.1a](activity_per_min/Tg/1.2W_6day_allbatch_min.png)  | ![Image 2.1a](activity_per_min/Tg/1.2W_7day_allbatch_min.png)  | ![Image 2.1a](activity_per_min/Tg/1.2W_8day_allbatch_min.png)  |
+| <img src="activity_per_min/Tg/1W_5day_allbatch_min.png"  width="400" height="300"> | <img src="activity_per_min/Tg/1.2W_5day_allbatch_min.png"  width="400" height="300"> | 
+|:----------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------:|
+| <img src="activity_per_min/Tg/1W_6day_allbatch_min.png"  width="400" height="300"> | <img src="activity_per_min/Tg/1.2W_6day_allbatch_min.png"  width="400" height="300"> | 
+
+| <img src="activity_per_min/Tg/1W_7day_allbatch_min.png"  width="400" height="300"> | <img src="activity_per_min/Tg/1.2W_7day_allbatch_min.png"  width="400" height="300"> |
+|:----------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------:|
+| <img src="activity_per_min/Tg/1W_8day_allbatch_min.png"  width="400" height="300"> | <img src="activity_per_min/Tg/1.2W_8day_allbatch_min.png"  width="400" height="300"> |
 
 ## OFF -> ON
 ### 2.2. Percentage of zebrafish that show a startle response after a sudden light ON
 
-|  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_startle_latency_comparison_event.png"  width="400" height="300">  |  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_startle_latency_comparison_value.png"  width="400" height="300">  |   <img src="Stats/Quantization/Tg/behaviour_pattern/1W_startle_intensity_comparison_value.png"  width="400" height="300">   |
-|:-----------------------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------------------------------------------:|
-| <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_startle_latency_comparison_event.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_startle_latency_comparison_value.png"  width="400" height="300"> |  <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_startle_intensity_comparison_value.png"  width="400" height="300">  |
+|   <img src="Stats/Quantization/Tg/behaviour_pattern/1W_startle_latency_comparison_event.png"  width="400" height="300">   |  <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_startle_latency_comparison_event.png"  width="400" height="300">  |  
+|:-------------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------:|
+|   <img src="Stats/Quantization/Tg/behaviour_pattern/1W_startle_latency_comparison_value.png"  width="400" height="300">   |  <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_startle_latency_comparison_value.png"  width="400" height="300">  |
+|  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_startle_intensity_comparison_value.png"  width="400" height="300">  | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_startle_intensity_comparison_value.png"  width="400" height="300"> |
+
+
 
  * Conclusion (1) : Response to sudden light ON is not affected by EM radiation
 
@@ -43,9 +50,12 @@ ON -> OFF
  * Similar adaptation time between control and EM radiation on 7dpf and 8dpf.
 
 ### 2.4. Active Bout counts, Active Bout mean duration, Rest Bout counts, and Rest Bout mean duration after light ON
-|  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_light_active_bout_count_comparison_value.png"  width="400" height="300">  |  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_light_active_bout_intensity_comparison_value.png"  width="400" height="300">  |  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_light_rest_bout_count_comparison_value.png"  width="400" height="300">  |  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_light_rest_bout_intensity_comparison_value.png"  width="400" height="300">  |
-|:-------------------------------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------------------------------------------------:|
-| <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_light_active_bout_count_comparison_value.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_light_active_bout_intensity_comparison_value.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_light_rest_bout_count_comparison_value.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_light_rest_bout_intensity_comparison_value.png"  width="400" height="300"> |
+|   <img src="Stats/Quantization/Tg/behaviour_pattern/1W_light_active_bout_count_comparison_value.png"  width="400" height="300">   |   <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_light_active_bout_count_comparison_value.png"  width="400" height="300">   | 
+|:---------------------------------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------------:|
+| <img src="Stats/Quantization/Tg/behaviour_pattern/1W_light_active_bout_intensity_comparison_value.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_light_active_bout_intensity_comparison_value.png"  width="400" height="300"> |
+|    <img src="Stats/Quantization/Tg/behaviour_pattern/1W_light_rest_bout_count_comparison_value.png"  width="400" height="300">    |    <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_light_rest_bout_count_comparison_value.png"  width="400" height="300">    |
+|  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_light_rest_bout_intensity_comparison_value.png"  width="400" height="300">  |  <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_light_rest_bout_intensity_comparison_value.png"  width="400" height="300">  |
+
 * Conclusion (3) : 
 1. Both low and high EM radiation groups have a higher active bout count than the control group on 6dpf and 7dpf.
 2. Both low and high EM radiation groups have a smaller active bout mean duration than the control group on 6dpf.
@@ -82,10 +92,11 @@ ON -> OFF
 
 
 ### 2.7 Active Bout counts, Active Bout mean duration, Rest Bout counts, and Rest Bout mean duration after light off
-|  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_active_bout_count_comparison_value.png"  width="400" height="300">  |  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_active_bout_intensity_comparison_value.png"  width="400" height="300">  |  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_rest_bout_count_comparison_value.png"  width="400" height="300">  |  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_rest_bout_intensity_comparison_value.png"  width="400" height="300">  |
-|:------------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------:|
-| <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_dark_active_bout_count_comparison_value.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_dark_active_bout_intensity_comparison_value.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_dark_rest_bout_count_comparison_value.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_dark_rest_bout_intensity_comparison_value.png"  width="400" height="300"> |
-
+|   <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_active_bout_count_comparison_value.png"  width="400" height="300">   |    <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_dark_active_bout_count_comparison_value.png"  width="400" height="300">    | 
+|:--------------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------------------------------------------:|
+| <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_active_bout_intensity_comparison_value.png"  width="400" height="300"> |  <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_dark_active_bout_intensity_comparison_value.png"  width="400" height="300">  |
+|    <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_rest_bout_count_comparison_value.png"  width="400" height="300">    |     <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_dark_rest_bout_count_comparison_value.png"  width="400" height="300">     |
+|  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_rest_bout_intensity_comparison_value.png"  width="400" height="300">  |   <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_dark_rest_bout_intensity_comparison_value.png"  width="400" height="300">   |
 * Conclusion (5) : 
 1. For high level EM radiation, active bout count, active bout mean duration, rest bout count, <br> 
 and rest bout mean duration are not affected by EM radiation. 
@@ -123,5 +134,5 @@ on 7 dpf; and a lower rest bout count on 5 dpf; and a smaller rest bout mean dur
 * Similar startle response after light ON means the zebrafish do not show vision impairment after 
 exposure to EM radiation;
 * Active/rest bout pattern after light ON implies higher vigilance and higher anxiety; 
-* Most of the activities differences were in the 5-6 dpf, and the differences were not significant in the 7-8 dpf, 
+* Most of the activities differences were in the 5-6 dpf, and the differences were not significant in the 7-8 dpf, <br>
 which means the zebrafish can either adapt to the environment or recover from the exposure of EM radiation.
