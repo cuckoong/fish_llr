@@ -1,11 +1,10 @@
 import os
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from pymer4.models import Lmer
-from scipy.stats import chi2_contingency, fisher_exact
+from scipy.stats import chi2_contingency, fisher_exact, mannwhitneyu
 
 sns.set(style="whitegrid")
 
@@ -37,8 +36,17 @@ def significance_markers(value):
         return ''
 
 
-def compare_event(df, selected_column):
+def compare_event(df, selected_column, power):
+    # NAMES and days
+    if selected_column == 'startle_latency':
+        event_name = 'Startle Response'
+    else:
+        event_name = selected_column.replace('_', ' ').title()
+
     days = df['day'].unique()
+    power_sar = '1.6W/kg' if power == 1 else '2W/kg'
+
+    # transform to event
     df['event'] = df[selected_column].apply(lambda x: 1 if pd.notna(x) else 0)
 
     # visualize bar chart with label side by side, day as x-axis, and startle percentage as y-axis
@@ -74,23 +82,32 @@ def compare_event(df, selected_column):
                 max_ratio = max(group1_count / group1_total, group2_count / group2_total)
                 ax.text(day - 5, max_ratio + 0.02, star_marker, fontsize=20, horizontalalignment='center')
 
-    plt.title(selected_column.replace('_', ' ').title() + f'({fish_type} {power}W)')
-    plt.ylabel('Existing Ratio')
+    plt.title(f'SAR={power_sar}')
+    plt.ylabel(event_name + ' Ratio')
     plt.ylim(0, 1)
     # legend outside the plot
-    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+    plt.legend(loc='upper left', borderaxespad=0., title='')
     plt.tight_layout()
     plt.savefig(f'Figures/Stats/Quantization/{fish_type}/behaviour_pattern/'
                 f'{power}W_{selected_column}_comparison_event.png', dpi=300)
 
 
-def compare_value(df, selected_column):
+def compare_value(df, selected_column, power):
     df = df.copy()
 
     # unique days
     days = df['day'].unique()
     group1_data = df[df['label'] == 'Control'].copy()
     group2_data = df[df['label'] == 'EM'].copy()
+
+    # power
+    power_sar = '1.6W/kg' if power == 1 else '2W/kg'
+
+    # value name
+    if selected_column == 'startle_latency':
+        value_name = 'Startle Latency'
+    else:
+        value_name = selected_column.replace('_', ' ').title()
 
     #  ========== value minus control mean and divide by control std ===========================
     group1_data_mean = group1_data.groupby(['batch', 'day'])[selected_column].mean().reset_index()
@@ -99,12 +116,13 @@ def compare_value(df, selected_column):
     df = df.merge(group1_data_mean, on=['batch', 'day'], how='left', suffixes=('', '_mean'))
     df = df.merge(group1_data_std, on=['batch', 'day'], how='left', suffixes=('', '_std'))
 
-    df['selected_value'] = (df[selected_column] - df[selected_column + '_mean']) / df[selected_column + '_std']
-    star_y = df['selected_value'].median()
+    df[selected_column] = (df[selected_column] - df[selected_column + '_mean']) / (df[selected_column + '_std'] + 1e-8)
+    star_y = df[selected_column].median()
 
     #  ========== visualize and statistical analysis ===========================
-    fig, ax = plt.subplots(1, 1, figsize=(4, 4))
-    sns.boxplot(x="day", y='selected_value', hue="label", data=df, ax=ax, notch=True)
+    # width 400 height 300
+    fig, ax = plt.subplots(1, 1, figsize=(4, 3))
+    sns.boxplot(x="day", y=selected_column, hue="label", data=df, ax=ax, showfliers=False)
 
     for day in days:
         # compare values between labels
@@ -118,6 +136,12 @@ def compare_value(df, selected_column):
             continue
         else:
             df_subset = df[(df['day'] == day)].dropna(subset=[selected_column]).copy()
+            group1_value_nona = df_subset[df_subset['label'] == 'Control'][selected_column]
+            group2_value_nona = df_subset[df_subset['label'] == 'EM'][selected_column]
+
+            # do wilcoxon test between two groups
+            _, p_value = mannwhitneyu(group1_value_nona, group2_value_nona)
+            '''
             formula = f"{selected_column} ~ label + (1|batch)"
 
             if 'count' in selected_column:
@@ -132,17 +156,17 @@ def compare_value(df, selected_column):
 
             res = model.fit()
             p_value = res.loc['labelEM', 'P-val']
+            '''
 
             if p_value < 0.05:
                 star_marker = significance_markers(p_value)
-                ax.text(day - 5, star_y, star_marker, fontsize=20, horizontalalignment='center', color='red')
+                ax.text(day - 5, star_y, star_marker, fontsize=35, horizontalalignment='center', color='red')
 
-    plt.title(selected_column.replace('_', ' ').title() + ' Comparison')
-    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
-    plt.ylabel('')
-
-    # y limits
-    # plt.ylim(lower_limit, upper_limit)
+    # legend under title outside the plot and vertical
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=2)
+    plt.xlabel('')
+    ax.set_title(f'SAR={power_sar} ' + value_name)
+    plt.ylabel(value_name+'\n(Normalized to Batch Control)', fontsize=8)
     plt.tight_layout()
     plt.savefig(f'Figures/Stats/Quantization/{fish_type}/behaviour_pattern/'
                 f'{power}W_{selected_column}_comparison_value.png', dpi=300)
@@ -158,23 +182,21 @@ if __name__ == '__main__':
         features['label'] = features['label'].apply(lambda x: 'Control' if x == 0 else 'EM')
 
         # ====== comparing none vs not none between labels ==================================
-        '''
-        compare_event(features, selected_column='startle_latency')
-        compare_event(features, selected_column='light_adjustment_intervals')
-        compare_event(features, selected_column='dark_adjustment_intervals')
-        '''
+        compare_event(features, selected_column='startle_latency', power=power)
+        # compare_event(features, selected_column='light_adjustment_intervals', power=power)
+        # compare_event(features, selected_column='dark_adjustment_intervals', power=power)
 
         # ====== comparing values between labels ==================================
-        compare_value(features, selected_column='light_adjustment_intervals')
-        compare_value(features, selected_column='light_rest_bout_intensity')
-        compare_value(features, selected_column='light_rest_bout_count')
-        compare_value(features, selected_column='light_active_bout_intensity')
-        compare_value(features, selected_column='light_active_bout_count')
-        compare_value(features, selected_column='dark_adjustment_intervals')
-        compare_value(features, selected_column='dark_rest_bout_intensity')
-        compare_value(features, selected_column='dark_rest_bout_count')
-        compare_value(features, selected_column='dark_active_bout_intensity')
-        compare_value(features, selected_column='dark_active_bout_count')
-        compare_value(features, selected_column='increase_intensity')
-        compare_value(features, selected_column='startle_intensity')
-        compare_value(features, selected_column='startle_latency')
+        compare_value(features, selected_column='light_adjustment_intervals', power=power)
+        compare_value(features, selected_column='light_rest_bout_intensity', power=power)
+        compare_value(features, selected_column='light_rest_bout_count', power=power)
+        compare_value(features, selected_column='light_active_bout_intensity', power=power)
+        compare_value(features, selected_column='light_active_bout_count', power=power)
+        compare_value(features, selected_column='dark_adjustment_intervals', power=power)
+        compare_value(features, selected_column='dark_rest_bout_intensity', power=power)
+        compare_value(features, selected_column='dark_rest_bout_count', power=power)
+        compare_value(features, selected_column='dark_active_bout_intensity', power=power)
+        compare_value(features, selected_column='dark_active_bout_count', power=power)
+        compare_value(features, selected_column='increase_intensity', power=power)
+        compare_value(features, selected_column='startle_intensity', power=power)
+        compare_value(features, selected_column='startle_latency', power=power)
