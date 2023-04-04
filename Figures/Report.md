@@ -28,9 +28,9 @@ ON -> OFF
 ## OFF -> ON
 ### 2.2. Percentage of zebrafish that show a startle response after a sudden light ON
 
-|  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_startle_latency_comparison_event.png"  width="400" height="300">  |  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_startle_latency_comparison_value.png"  width="400" height="300">  |
-|:-----------------------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------:|
-| <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_startle_latency_comparison_event.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_startle_latency_comparison_value.png"  width="400" height="300"> |
+|  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_startle_latency_comparison_event.png"  width="400" height="300">  |  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_startle_latency_comparison_value.png"  width="400" height="300">  |   <img src="Stats/Quantization/Tg/behaviour_pattern/1W_startle_intensity_comparison_value.png"  width="400" height="300">   |
+|:-----------------------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------------------------------------------:|
+| <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_startle_latency_comparison_event.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_startle_latency_comparison_value.png"  width="400" height="300"> |  <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_startle_intensity_comparison_value.png"  width="400" height="300">  |
 
  * Conclusion (1) : Response to sudden light ON is not affected by EM radiation
 
@@ -68,6 +68,12 @@ ON -> OFF
 
 
 ## ON -> OFF
+### 2.5 Maximum Activity after light off
+| <img src="Stats/Quantization/Tg/behaviour_pattern/1W_increase_intensity_comparison_value.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_increase_intensity_comparison_value.png"  width="400" height="300"> |
+|:------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------:|
+
+
+
 ### 2.6 Adaptation time after light off
 | <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_adjustment_intervals_comparison_value.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_dark_adjustment_intervals_comparison_value.png"  width="400" height="300"> |
 |:-------------------------------------------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------------------------------------------------:|
@@ -75,7 +81,7 @@ ON -> OFF
 * Conclusion (4) : Adaptation time after light off is not affected by EM radiation
 
 
-### 2.4. Active Bout counts, Active Bout mean duration, Rest Bout counts, and Rest Bout mean duration after light off
+### 2.7 Active Bout counts, Active Bout mean duration, Rest Bout counts, and Rest Bout mean duration after light off
 |  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_active_bout_count_comparison_value.png"  width="400" height="300">  |  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_active_bout_intensity_comparison_value.png"  width="400" height="300">  |  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_rest_bout_count_comparison_value.png"  width="400" height="300">  |  <img src="Stats/Quantization/Tg/behaviour_pattern/1W_dark_rest_bout_intensity_comparison_value.png"  width="400" height="300">  |
 |:------------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------:|
 | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_dark_active_bout_count_comparison_value.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_dark_active_bout_intensity_comparison_value.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_dark_rest_bout_count_comparison_value.png"  width="400" height="300"> | <img src="Stats/Quantization/Tg/behaviour_pattern/1.2W_dark_rest_bout_intensity_comparison_value.png"  width="400" height="300"> |
